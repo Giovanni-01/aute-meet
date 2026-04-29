@@ -299,6 +299,24 @@ function HostInfoPanel({
           </div>
         )}
       </div>
+
+      <Separator className="border-[#C2CDCF]" />
+
+      {/* How-to steps */}
+      <ol className="flex flex-col gap-2">
+        {[
+          "Elige un día disponible en el calendario",
+          "Selecciona el horario que mejor te venga",
+          "Introduce tus datos y confirma",
+        ].map((step, i) => (
+          <li key={i} className="flex items-start gap-2.5">
+            <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#64797C]/10 text-[10px] font-semibold text-[#64797C]">
+              {i + 1}
+            </span>
+            <span className="text-xs leading-relaxed text-[#8A9F9F]">{step}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }
