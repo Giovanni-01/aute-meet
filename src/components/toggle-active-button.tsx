@@ -47,7 +47,7 @@ export function ToggleActiveButton({
       disabled={updating}
       onClick={handleToggle}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors disabled:opacity-50 ${
-        isActive ? "bg-slate-900" : "bg-slate-300"
+        isActive ? "bg-[#64797C]" : "bg-[#C2CDCF]"
       }`}
     >
       <span

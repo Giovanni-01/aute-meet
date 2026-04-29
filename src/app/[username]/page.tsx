@@ -52,22 +52,22 @@ export default async function PublicProfilePage({ params }: PageProps) {
     .toUpperCase()
 
   return (
-    <main className="min-h-screen bg-slate-50 py-16 px-6">
+    <main className="min-h-screen bg-[#F7F8F8] py-16 px-6">
       <div className="mx-auto max-w-xl">
         {/* Host info */}
         <div className="flex flex-col items-center gap-4 text-center">
           <Avatar className="h-20 w-20">
             <AvatarImage src={p.avatar_url ?? undefined} alt={p.full_name} />
-            <AvatarFallback className="bg-slate-200 text-xl font-medium text-slate-600">
+            <AvatarFallback className="bg-[#64797C] text-xl font-medium text-white">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-slate-900">
+            <h1 className="text-2xl font-semibold text-[#37585A]">
               {p.full_name}
             </h1>
             {p.bio && (
-              <p className="max-w-sm text-sm text-slate-500">{p.bio}</p>
+              <p className="max-w-sm text-sm text-[#8A9F9F]">{p.bio}</p>
             )}
           </div>
         </div>
@@ -75,7 +75,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
         {/* Event type list */}
         <div className="mt-10 flex flex-col gap-3">
           {events.length === 0 && (
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-sm text-[#8A9F9F]">
               Este usuario no tiene tipos de evento disponibles.
             </p>
           )}
@@ -84,32 +84,37 @@ export default async function PublicProfilePage({ params }: PageProps) {
             <Link
               key={et.id}
               href={`/${p.username}/${et.slug}`}
-              className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-slate-300"
+              className="group flex items-center gap-4 rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card transition-colors hover:border-[#8A9F9F]"
             >
               <div
                 className="h-10 w-1.5 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: et.color }}
               />
               <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-sm font-medium text-slate-900 group-hover:text-slate-700">
+                <span className="text-sm font-medium text-[#37585A] group-hover:text-[#64797C]">
                   {et.title}
                 </span>
                 {et.description && (
-                  <span className="line-clamp-1 text-xs text-slate-400">
+                  <span className="line-clamp-1 text-xs text-[#8A9F9F]">
                     {et.description}
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1 text-xs text-slate-400">
-                <Clock className="h-3.5 w-3.5" />
-                {et.duration_minutes} min
+              <div className="flex shrink-0 items-center gap-3">
+                <div className="flex items-center gap-1 text-xs text-[#8A9F9F]">
+                  <Clock className="h-3.5 w-3.5" />
+                  {et.duration_minutes} min
+                </div>
+                <span className="text-xs font-medium text-[#64797C] group-hover:text-[#37585A] transition-colors">
+                  Reservar →
+                </span>
               </div>
             </Link>
           ))}
         </div>
 
         {/* Aute Meet branding */}
-        <div className="mt-10 flex items-center justify-center gap-2 text-xs text-slate-300">
+        <div className="mt-10 flex items-center justify-center gap-2 text-xs text-[#C2CDCF]">
           <CalendarDays className="h-3.5 w-3.5" />
           <span>Powered by Aute Meet</span>
         </div>

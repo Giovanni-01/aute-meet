@@ -131,13 +131,13 @@ export function AvailabilityEditor({ initialRules }: AvailabilityEditorProps) {
         return (
           <div key={dayIndex} className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-slate-700">{dayName}</h3>
+              <h3 className="text-sm font-medium text-[#64797C]">{dayName}</h3>
               <div className="flex items-center gap-2">
                 {dayIndex < 5 && dayRules.length > 0 && (
                   <button
                     type="button"
                     onClick={() => copyToWeekdays(dayIndex)}
-                    className="text-xs text-slate-400 hover:text-slate-600"
+                    className="text-xs text-[#8A9F9F] hover:text-[#64797C]"
                   >
                     Copiar a L-V
                   </button>
@@ -145,7 +145,7 @@ export function AvailabilityEditor({ initialRules }: AvailabilityEditorProps) {
                 <button
                   type="button"
                   onClick={() => addRule(dayIndex)}
-                  className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700"
+                  className="flex items-center gap-1 text-xs text-[#8A9F9F] hover:text-[#64797C]"
                 >
                   <Plus className="h-3 w-3" />
                   Añadir franja
@@ -154,7 +154,7 @@ export function AvailabilityEditor({ initialRules }: AvailabilityEditorProps) {
             </div>
 
             {dayRules.length === 0 ? (
-              <p className="text-xs text-slate-400">No disponible</p>
+              <p className="text-xs text-[#8A9F9F]">No disponible</p>
             ) : (
               <div className="space-y-2">
                 {dayRules.map((rule) => (
@@ -168,21 +168,21 @@ export function AvailabilityEditor({ initialRules }: AvailabilityEditorProps) {
                       onChange={(e) =>
                         updateRule(rule._index, "start_time", e.target.value)
                       }
-                      className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                      className="rounded-lg border border-[#C2CDCF] px-2 py-1.5 text-sm text-[#1A1A1A] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
                     />
-                    <span className="text-sm text-slate-400">—</span>
+                    <span className="text-sm text-[#8A9F9F]">—</span>
                     <input
                       type="time"
                       value={rule.end_time}
                       onChange={(e) =>
                         updateRule(rule._index, "end_time", e.target.value)
                       }
-                      className="rounded-lg border border-slate-300 px-2 py-1.5 text-sm text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                      className="rounded-lg border border-[#C2CDCF] px-2 py-1.5 text-sm text-[#1A1A1A] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
                     />
                     <button
                       type="button"
                       onClick={() => removeRule(rule._index)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-[#8A9F9F] hover:text-red-500"
                       aria-label="Eliminar franja"
                     >
                       <X className="h-4 w-4" />
@@ -193,7 +193,7 @@ export function AvailabilityEditor({ initialRules }: AvailabilityEditorProps) {
             )}
 
             {dayIndex < 6 && (
-              <div className="border-b border-slate-100 pt-2" />
+              <div className="border-b border-[#C2CDCF] pt-2" />
             )}
           </div>
         )

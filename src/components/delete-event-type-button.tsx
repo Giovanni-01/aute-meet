@@ -71,7 +71,7 @@ export function DeleteEventTypeButton({
       size="sm"
       variant="ghost"
       onClick={() => setConfirming(true)}
-      className="h-8 w-8 p-0 text-slate-400 hover:text-red-600"
+      className="h-8 w-8 p-0 text-[#8A9F9F] hover:text-red-600"
       aria-label={`Eliminar ${title}`}
     >
       <Trash2 className="h-4 w-4" />

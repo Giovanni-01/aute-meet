@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import {
   addDays,
   addMonths,
@@ -19,8 +19,18 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
-import { ChevronLeft, ChevronRight, CheckCircle, Video, TriangleAlert } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  Video,
+  TriangleAlert,
+  Clock,
+  Globe,
+} from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,15 +58,22 @@ interface BookingWidgetProps {
   username: string
   slug: string
   timezone: string
-  availableDayOfWeeks: number[] // 0 = Sunday
+  availableDayOfWeeks: number[] // 0 = Sunday (JS)
   durationMinutes: number
+  // Host / event type info (rendered in the left info panel)
+  hostName: string
+  hostAvatarUrl: string | null
+  hostBio: string | null
+  eventTypeTitle: string
+  eventTypeColor: string
+  eventTypeDescription: string | null
+  tzLabel: string | undefined
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const DAY_INITIALS = ["L", "M", "X", "J", "V", "S", "D"] // Monday-first
 
-/** Formats a UTC ISO string as a local time string in the given IANA timezone. */
 function formatTime(iso: string, timezone: string): string {
   return new Intl.DateTimeFormat("es-ES", {
     hour: "2-digit",
@@ -66,7 +83,6 @@ function formatTime(iso: string, timezone: string): string {
   }).format(new Date(iso))
 }
 
-/** Formats a UTC ISO date as a long Spanish date string in the given timezone. */
 function formatDateLong(iso: string, timezone: string): string {
   return new Intl.DateTimeFormat("es-ES", {
     weekday: "long",
@@ -77,16 +93,28 @@ function formatDateLong(iso: string, timezone: string): string {
   }).format(new Date(iso))
 }
 
-/** Returns the Monday-first index (0=Monday, 6=Sunday) from a JS Date. */
+function capitalizeFirst(s: string): string {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s
+}
+
 function mondayFirstDow(date: Date): number {
   return (getDay(date) + 6) % 7
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase()
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 interface MiniCalendarProps {
   currentMonth: Date
-  availableDayOfWeeks: number[] // JS convention 0=Sunday
+  availableDayOfWeeks: number[]
   selectedDate: string | null
   onSelectDate: (date: string) => void
   onPrev: () => void
@@ -106,10 +134,7 @@ function MiniCalendar({
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-
-  // Padding cells for Monday-first grid
   const leadingPad = mondayFirstDow(monthStart)
-
   const canPrev = isAfter(monthStart, today)
   const canNext = isBefore(monthStart, startOfMonth(maxDate))
 
@@ -119,42 +144,42 @@ function MiniCalendar({
   }).format(currentMonth)
 
   return (
-    <div className="select-none">
-      {/* Navigation */}
-      <div className="mb-4 flex items-center justify-between">
+    <div className="select-none w-full">
+      {/* Month navigation */}
+      <div className="mb-5 flex items-center justify-between">
         <button
           onClick={onPrev}
           disabled={!canPrev}
           aria-label="Mes anterior"
           className={cn(
-            "rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100",
+            "rounded-lg p-1.5 text-[#64797C] transition-colors hover:bg-[#F5F5F5] hover:text-[#37585A]",
             !canPrev && "cursor-default opacity-30"
           )}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
-        <span className="text-sm font-medium capitalize text-slate-900">
-          {monthLabel}
+        <span className="text-sm font-semibold text-[#37585A]">
+          {capitalizeFirst(monthLabel)}
         </span>
         <button
           onClick={onNext}
           disabled={!canNext}
           aria-label="Mes siguiente"
           className={cn(
-            "rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100",
+            "rounded-lg p-1.5 text-[#64797C] transition-colors hover:bg-[#F5F5F5] hover:text-[#37585A]",
             !canNext && "cursor-default opacity-30"
           )}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
       </div>
 
-      {/* Day-of-week headers (Monday first) */}
-      <div className="mb-1 grid grid-cols-7 gap-1">
+      {/* Day-of-week headers */}
+      <div className="mb-2 grid grid-cols-7 gap-1">
         {DAY_INITIALS.map((d) => (
           <div
             key={d}
-            className="py-1 text-center text-xs font-medium text-slate-400"
+            className="py-1 text-center text-xs font-semibold uppercase tracking-wide text-[#8A9F9F]"
           >
             {d}
           </div>
@@ -163,14 +188,12 @@ function MiniCalendar({
 
       {/* Day cells */}
       <div className="grid grid-cols-7 gap-1">
-        {/* Leading padding */}
         {Array.from({ length: leadingPad }).map((_, i) => (
           <div key={`pad-${i}`} />
         ))}
-
         {days.map((day) => {
           const dateStr = format(day, "yyyy-MM-dd")
-          const jsDoW = getDay(day) // 0=Sunday
+          const jsDoW = getDay(day)
           const isPast = isBefore(day, today)
           const isBeyond = isAfter(day, maxDate)
           const hasAvailability = availableDayOfWeeks.includes(jsDoW)
@@ -184,17 +207,185 @@ function MiniCalendar({
               disabled={disabled}
               onClick={() => onSelectDate(dateStr)}
               className={cn(
-                "mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-sm transition-colors",
-                disabled && "cursor-default text-slate-300",
-                !disabled && !isSelected && "text-slate-700 hover:bg-slate-100",
-                isSelected && "bg-slate-900 font-medium text-white",
-                isToday && !isSelected && !disabled && "font-semibold underline decoration-dotted"
+                "mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors",
+                disabled && "cursor-default text-[#C2CDCF]",
+                !disabled && !isSelected && "font-medium text-[#37585A] hover:bg-[#64797C] hover:text-white",
+                isSelected && "bg-[#64797C] font-semibold text-white",
+                isToday && !isSelected && !disabled && "border-2 border-[#F0BF47]"
               )}
             >
               {format(day, "d")}
             </button>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Host info panel (left column) ───────────────────────────────────────────
+
+interface HostInfoPanelProps {
+  hostName: string
+  hostAvatarUrl: string | null
+  hostBio: string | null
+  eventTypeTitle: string
+  eventTypeColor: string
+  eventTypeDescription: string | null
+  durationMinutes: number
+  tzLabel: string | undefined
+}
+
+function HostInfoPanel({
+  hostName,
+  hostAvatarUrl,
+  hostBio,
+  eventTypeTitle,
+  eventTypeColor,
+  eventTypeDescription,
+  durationMinutes,
+  tzLabel,
+}: HostInfoPanelProps) {
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Host identity */}
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src={hostAvatarUrl ?? undefined} alt={hostName} />
+          <AvatarFallback className="bg-[#64797C] text-sm font-medium text-white">
+            {getInitials(hostName)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-[#37585A]">{hostName}</span>
+          {hostBio && (
+            <span className="text-xs text-[#8A9F9F] line-clamp-1">{hostBio}</span>
+          )}
+        </div>
+      </div>
+
+      <Separator className="border-[#C2CDCF]" />
+
+      {/* Event type details */}
+      <div className="flex flex-col gap-3">
+        <div
+          className="h-1 w-10 rounded-full"
+          style={{ backgroundColor: eventTypeColor }}
+        />
+        <h1 className="text-lg font-semibold leading-tight text-[#37585A]">
+          {eventTypeTitle}
+        </h1>
+
+        <div className="flex items-center gap-1.5 text-sm text-[#8A9F9F]">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>{durationMinutes} minutos</span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-sm text-[#8A9F9F]">
+          <Video className="h-4 w-4 shrink-0" />
+          <span>Google Meet</span>
+        </div>
+
+        {eventTypeDescription && (
+          <p className="text-sm leading-relaxed text-[#8A9F9F]">
+            {eventTypeDescription}
+          </p>
+        )}
+
+        {tzLabel && (
+          <div className="flex items-start gap-1.5 text-xs text-[#8A9F9F]">
+            <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{tzLabel}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Booking summary panel (left col in form phase) ──────────────────────────
+
+interface BookingSummaryPanelProps {
+  hostName: string
+  hostAvatarUrl: string | null
+  eventTypeTitle: string
+  eventTypeColor: string
+  durationMinutes: number
+  selectedDate: string | null
+  selectedSlot: Slot | null
+  timezone: string
+  tzLabel: string | undefined
+}
+
+function BookingSummaryPanel({
+  hostName,
+  hostAvatarUrl,
+  eventTypeTitle,
+  eventTypeColor,
+  durationMinutes,
+  selectedDate,
+  selectedSlot,
+  timezone,
+  tzLabel,
+}: BookingSummaryPanelProps) {
+  const dateLabel = selectedDate
+    ? capitalizeFirst(
+        new Intl.DateTimeFormat("es-ES", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }).format(parseISO(selectedDate))
+      )
+    : ""
+
+  const timeLabel = selectedSlot
+    ? `${formatTime(selectedSlot.start, timezone)} – ${formatTime(selectedSlot.end, timezone)}`
+    : ""
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-9 w-9">
+          <AvatarImage src={hostAvatarUrl ?? undefined} alt={hostName} />
+          <AvatarFallback className="bg-[#64797C] text-sm font-medium text-white">
+            {getInitials(hostName)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="text-sm font-semibold text-[#37585A]">{hostName}</span>
+      </div>
+
+      <Separator className="border-[#C2CDCF]" />
+
+      <div className="flex flex-col gap-3">
+        <div
+          className="h-1 w-10 rounded-full"
+          style={{ backgroundColor: eventTypeColor }}
+        />
+        <p className="text-base font-semibold text-[#37585A]">{eventTypeTitle}</p>
+
+        {dateLabel && (
+          <p className="text-sm font-medium text-[#37585A]">{dateLabel}</p>
+        )}
+        {timeLabel && (
+          <p className="text-sm text-[#8A9F9F]">{timeLabel}</p>
+        )}
+
+        <div className="flex items-center gap-1.5 text-sm text-[#8A9F9F]">
+          <Clock className="h-4 w-4 shrink-0" />
+          <span>{durationMinutes} min</span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-sm text-[#8A9F9F]">
+          <Video className="h-4 w-4 shrink-0" />
+          <span>Google Meet</span>
+        </div>
+
+        {tzLabel && (
+          <div className="flex items-start gap-1.5 text-xs text-[#8A9F9F]">
+            <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span>{tzLabel}</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -208,6 +399,13 @@ export function BookingWidget({
   timezone,
   availableDayOfWeeks,
   durationMinutes,
+  hostName,
+  hostAvatarUrl,
+  hostBio,
+  eventTypeTitle,
+  eventTypeColor,
+  eventTypeDescription,
+  tzLabel,
 }: BookingWidgetProps) {
   const today = startOfDay(new Date())
 
@@ -218,8 +416,6 @@ export function BookingWidget({
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null)
   const [confirmation, setConfirmation] = useState<BookingConfirmation | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-
-  const [isPending, startTransition] = useTransition()
 
   // Form state
   const [name, setName] = useState("")
@@ -302,16 +498,14 @@ export function BookingWidget({
     }
   }
 
-  // ─── Render ──────────────────────────────────────────────────────────────
-
-  // ── Error ─────────────────────────────────────────────────────────────────
+  // ─── Phase: error ─────────────────────────────────────────────────────────
   if (phase === "error") {
     return (
-      <div className="flex flex-col items-center gap-4 py-8 text-center">
+      <div className="flex min-h-[500px] flex-col items-center justify-center gap-4 p-8 text-center">
         <TriangleAlert className="h-10 w-10 text-red-400" />
         <div className="flex flex-col gap-1">
-          <p className="font-medium text-slate-900">Algo ha ido mal</p>
-          <p className="text-sm text-slate-500">{errorMsg}</p>
+          <p className="font-semibold text-[#37585A]">Algo ha ido mal</p>
+          <p className="text-sm text-[#8A9F9F]">{errorMsg}</p>
         </div>
         <Button
           variant="outline"
@@ -327,7 +521,7 @@ export function BookingWidget({
     )
   }
 
-  // ── Confirmed ─────────────────────────────────────────────────────────────
+  // ─── Phase: confirmed ─────────────────────────────────────────────────────
   if (phase === "confirmed" && confirmation) {
     const { booking, meetLink } = confirmation
     const dateLabel = formatDateLong(booking.start_time, timezone)
@@ -335,14 +529,14 @@ export function BookingWidget({
     const endLabel = formatTime(booking.end_time, timezone)
 
     return (
-      <div className="flex flex-col items-center gap-6 py-8 text-center">
+      <div className="flex min-h-[500px] flex-col items-center justify-center gap-6 p-8 text-center">
         <CheckCircle className="h-12 w-12 text-green-500" />
         <div className="flex flex-col gap-1">
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-[#37585A]">
             ¡Reserva confirmada!
           </h2>
-          <p className="text-sm text-slate-500 capitalize">{dateLabel}</p>
-          <p className="text-sm font-medium text-slate-700">
+          <p className="text-sm text-[#8A9F9F]">{capitalizeFirst(dateLabel)}</p>
+          <p className="text-sm font-medium text-[#64797C]">
             {startLabel} – {endLabel} · {durationMinutes} min
           </p>
         </div>
@@ -352,195 +546,221 @@ export function BookingWidget({
             href={meetLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-300"
+            className="flex items-center gap-2 rounded-xl border border-[#C2CDCF] bg-white px-5 py-3 text-sm font-medium text-[#64797C] shadow-card transition-colors hover:border-[#8A9F9F]"
           >
             <Video className="h-4 w-4 text-blue-500" />
             Unirse a Google Meet
           </a>
         )}
 
-        <p className="max-w-xs text-xs text-slate-400">
-          Recibirás un correo de confirmación en {name ? name.split(" ")[0] + "'s email" : "tu email"}.
+        <p className="max-w-xs text-xs text-[#8A9F9F]">
+          Recibirás un correo de confirmación.
           {meetLink && " El enlace de Meet también está en tu invitación de Google Calendar."}
         </p>
       </div>
     )
   }
 
-  // ── Form ─────────────────────────────────────────────────────────────────
+  // ─── Phase: form / submitting — 2 column layout ───────────────────────────
   if (phase === "form" || phase === "submitting") {
     const isSubmitting = phase === "submitting"
-    const slotLabel = selectedSlot
-      ? `${formatTime(selectedSlot.start, timezone)} – ${formatTime(selectedSlot.end, timezone)}`
-      : ""
-    const dateLabelShort = selectedDate
-      ? new Intl.DateTimeFormat("es-ES", {
-          weekday: "short",
-          day: "numeric",
-          month: "short",
-        }).format(parseISO(selectedDate))
-      : ""
 
     return (
-      <div className="flex flex-col gap-5">
-        {/* Header with back button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setPhase("slots")}
-            disabled={isSubmitting}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Volver"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-slate-900 capitalize">
-              {dateLabelShort}
-            </span>
-            <span className="text-xs text-slate-500">{slotLabel}</span>
-          </div>
+      <div className="grid min-h-[520px] grid-cols-1 md:grid-cols-[240px_1fr]">
+        {/* Left: booking summary */}
+        <div className="border-b border-[#C2CDCF] bg-[#F7F8F8] p-6 md:border-b-0 md:border-r">
+          <BookingSummaryPanel
+            hostName={hostName}
+            hostAvatarUrl={hostAvatarUrl}
+            eventTypeTitle={eventTypeTitle}
+            eventTypeColor={eventTypeColor}
+            durationMinutes={durationMinutes}
+            selectedDate={selectedDate}
+            selectedSlot={selectedSlot}
+            timezone={timezone}
+            tzLabel={tzLabel}
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="attendee-name">Nombre *</Label>
-            <Input
-              id="attendee-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre completo"
-              required
+        {/* Right: form */}
+        <div className="p-6">
+          <div className="mb-5 flex items-center gap-2">
+            <button
+              onClick={() => setPhase("slots")}
               disabled={isSubmitting}
-            />
+              className="rounded-lg p-1.5 text-[#64797C] transition-colors hover:bg-[#F5F5F5] hover:text-[#37585A]"
+              aria-label="Volver"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <p className="text-sm font-semibold text-[#37585A]">
+              Introduce tus datos
+            </p>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="attendee-email">Email *</Label>
-            <Input
-              id="attendee-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              required
-              disabled={isSubmitting}
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="attendee-name">Nombre *</Label>
+              <Input
+                id="attendee-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Tu nombre completo"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="attendee-notes">
-              Notas{" "}
-              <span className="text-xs font-normal text-slate-400">
-                (opcional)
-              </span>
-            </Label>
-            <textarea
-              id="attendee-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="¿Hay algo que quieras comentar antes de la reunión?"
-              rows={3}
-              disabled={isSubmitting}
-              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50"
-            />
-          </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="attendee-email">Email *</Label>
+              <Input
+                id="attendee-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                required
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? "Confirmando…" : "Confirmar reserva"}
-          </Button>
-        </form>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="attendee-notes">
+                Notas{" "}
+                <span className="text-xs font-normal text-[#8A9F9F]">
+                  (opcional)
+                </span>
+              </Label>
+              <textarea
+                id="attendee-notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="¿Hay algo que quieras comentar antes de la reunión?"
+                rows={3}
+                disabled={isSubmitting}
+                className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50"
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="accent"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? "Confirmando…" : "Confirmar reserva"}
+            </Button>
+          </form>
+        </div>
       </div>
     )
   }
 
-  // ── Slots ────────────────────────────────────────────────────────────────
-  if (phase === "slots" || phase === "slots-loading") {
-    const isLoading = phase === "slots-loading"
-    const dateLabelShort = selectedDate
-      ? new Intl.DateTimeFormat("es-ES", {
+  // ─── Phase: calendar / slots — 3 column layout ───────────────────────────
+  const showSlots = phase === "slots" || phase === "slots-loading"
+  const isLoadingSlots = phase === "slots-loading"
+
+  const slotDateLabel = selectedDate
+    ? capitalizeFirst(
+        new Intl.DateTimeFormat("es-ES", {
           weekday: "long",
           day: "numeric",
           month: "long",
         }).format(parseISO(selectedDate))
-      : ""
+      )
+    : ""
 
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setPhase("calendar")}
-            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Volver al calendario"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <span className="text-sm font-medium capitalize text-slate-900">
-            {dateLabelShort}
-          </span>
-        </div>
-
-        {isLoading && (
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-10 animate-pulse rounded-lg bg-slate-100"
-              />
-            ))}
-          </div>
-        )}
-
-        {!isLoading && slots.length === 0 && (
-          <div className="py-8 text-center">
-            <p className="text-sm text-slate-500">
-              No hay horarios disponibles para este día.
-            </p>
-            <button
-              onClick={() => setPhase("calendar")}
-              className="mt-2 text-xs text-slate-400 underline hover:text-slate-600"
-            >
-              Elegir otro día
-            </button>
-          </div>
-        )}
-
-        {!isLoading && slots.length > 0 && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {slots.map((slot) => (
-              <button
-                key={slot.start}
-                onClick={() => handleSlotSelect(slot)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:border-slate-900 hover:bg-slate-900 hover:text-white"
-              >
-                {formatTime(slot.start, timezone)}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // ── Calendar (default phase) ─────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h2 className="text-sm font-medium text-slate-900">
-          Selecciona una fecha
-        </h2>
-        <p className="text-xs text-slate-400">
-          Solo se muestran días con disponibilidad
-        </p>
+    <div className="grid min-h-[520px] grid-cols-1 md:grid-cols-[240px_1fr_200px]">
+      {/* Col 1: Host info */}
+      <div className="border-b border-[#C2CDCF] p-6 md:border-b-0 md:border-r">
+        <HostInfoPanel
+          hostName={hostName}
+          hostAvatarUrl={hostAvatarUrl}
+          hostBio={hostBio}
+          eventTypeTitle={eventTypeTitle}
+          eventTypeColor={eventTypeColor}
+          eventTypeDescription={eventTypeDescription}
+          durationMinutes={durationMinutes}
+          tzLabel={tzLabel}
+        />
       </div>
 
-      <MiniCalendar
-        currentMonth={currentMonth}
-        availableDayOfWeeks={availableDayOfWeeks}
-        selectedDate={selectedDate}
-        onSelectDate={handleDateSelect}
-        onPrev={handlePrevMonth}
-        onNext={handleNextMonth}
-      />
+      {/* Col 2: Calendar */}
+      <div className="border-b border-[#C2CDCF] p-6 md:border-b-0 md:border-r">
+        <p className="mb-4 text-sm font-medium text-[#37585A]">
+          Selecciona una fecha
+        </p>
+        <MiniCalendar
+          currentMonth={currentMonth}
+          availableDayOfWeeks={availableDayOfWeeks}
+          selectedDate={selectedDate}
+          onSelectDate={handleDateSelect}
+          onPrev={handlePrevMonth}
+          onNext={handleNextMonth}
+        />
+      </div>
+
+      {/* Col 3: Slots */}
+      <div className="flex flex-col p-6">
+        {!showSlots && (
+          <div className="flex flex-1 flex-col items-center justify-center text-center">
+            <p className="text-xs text-[#C2CDCF]">
+              Selecciona un día para<br />ver los horarios disponibles
+            </p>
+          </div>
+        )}
+
+        {showSlots && (
+          <>
+            <p className="mb-4 text-sm font-semibold text-[#37585A]">
+              {slotDateLabel}
+            </p>
+
+            {isLoadingSlots && (
+              <div className="flex flex-col gap-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-10 animate-pulse rounded-xl bg-[#F5F5F5]"
+                  />
+                ))}
+              </div>
+            )}
+
+            {!isLoadingSlots && slots.length === 0 && (
+              <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+                <p className="text-sm text-[#8A9F9F]">
+                  No hay horarios disponibles para este día.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedDate(null)
+                    setPhase("calendar")
+                  }}
+                  className="text-xs text-[#64797C] underline hover:text-[#37585A]"
+                >
+                  Elegir otro día
+                </button>
+              </div>
+            )}
+
+            {!isLoadingSlots && slots.length > 0 && (
+              <div className="flex flex-col gap-2 overflow-y-auto">
+                {slots.map((slot) => (
+                  <button
+                    key={slot.start}
+                    onClick={() => handleSlotSelect(slot)}
+                    className="rounded-xl border border-[#C2CDCF] bg-white px-3 py-2.5 text-sm font-medium text-[#37585A] transition-colors hover:border-[#64797C] hover:bg-[#64797C] hover:text-white"
+                  >
+                    {formatTime(slot.start, timezone)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   )
 }

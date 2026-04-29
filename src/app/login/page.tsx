@@ -20,14 +20,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full max-w-sm">
         {/* Header */}
         <div className="mb-10 flex flex-col items-center gap-5 text-center">
-          <div className="flex items-center justify-center rounded-2xl bg-slate-900 p-4">
+          <div className="flex items-center justify-center rounded-2xl bg-[#64797C] p-4">
             <CalendarDays className="h-7 w-7 text-white" />
           </div>
           <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#37585A]">
               Bienvenido a Aute Meet
             </h1>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[#8A9F9F]">
               Inicia sesión con tu cuenta de Google para continuar
             </p>
           </div>
@@ -42,11 +42,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         )}
 
         {/* Sign-in card */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div className="rounded-2xl border border-[#C2CDCF] bg-white p-8 shadow-card">
           <GoogleSignInButton />
         </div>
 
-        <p className="mt-6 text-center text-xs text-slate-400">
+        <p className="mt-6 text-center text-xs text-[#8A9F9F]">
           Solo disponible para el equipo interno de Aute
         </p>
       </div>

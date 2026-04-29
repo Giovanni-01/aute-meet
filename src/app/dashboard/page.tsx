@@ -114,32 +114,42 @@ export default async function DashboardPage({
     .toUpperCase()
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F7F8F8]">
       {/* Top nav */}
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-[#C2CDCF] bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center rounded-xl bg-slate-900 p-2">
+            <div className="flex items-center justify-center rounded-xl bg-[#64797C] p-2">
               <CalendarDays className="h-5 w-5 text-white" />
             </div>
-            <span className="text-base font-semibold text-slate-900">
+            <span className="text-base font-semibold text-[#37585A]">
               Aute Meet
             </span>
           </div>
+
+          {/* Quick nav links */}
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/dashboard/event-types" className="text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors">
+              Tipos de evento
+            </Link>
+            <Link href="/dashboard/availability" className="text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors">
+              Disponibilidad
+            </Link>
+          </nav>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-slate-200 text-xs text-slate-600">
+                <AvatarFallback className="bg-[#64797C] text-xs text-white">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden flex-col sm:flex">
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-sm font-medium text-[#37585A]">
                   {displayName}
                 </span>
-                <span className="text-xs text-slate-500">{user.email}</span>
+                <span className="text-xs text-[#8A9F9F]">{user.email}</span>
               </div>
             </div>
 
@@ -148,7 +158,7 @@ export default async function DashboardPage({
                 type="submit"
                 variant="ghost"
                 size="sm"
-                className="gap-2 text-slate-500 hover:text-slate-900"
+                className="gap-2 text-[#8A9F9F] hover:text-[#37585A]"
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden sm:inline">Cerrar sesión</span>
@@ -161,10 +171,10 @@ export default async function DashboardPage({
       {/* Main content */}
       <main className="mx-auto max-w-5xl px-6 py-12">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <h1 className="text-2xl font-semibold text-[#37585A]">
             Bienvenido, {displayName.split(" ")[0]}
           </h1>
-          <p className="text-slate-500">
+          <p className="text-[#8A9F9F]">
             Tu panel de Aute Meet. Aquí aparecerán tus tipos de evento y
             próximas reservas.
           </p>
@@ -187,25 +197,25 @@ export default async function DashboardPage({
 
         {/* ── Google Calendar connection card ── */}
         <section className="mt-8">
-          <h2 className="mb-3 text-sm font-medium text-slate-700">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#64797C]">
             Calendarios conectados
           </h2>
 
           {googleConnection ? (
-            <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-center justify-between rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card">
               <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                  <Calendar className="h-5 w-5 text-slate-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                  <Calendar className="h-5 w-5 text-[#64797C]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-slate-900">
+                  <span className="text-sm font-medium text-[#37585A]">
                     Google Calendar
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-[#8A9F9F]">
                     {googleConnection.provider_account_email}
                   </span>
                   {googleConnection.token_expires_at && (
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-[#8A9F9F]">
                       Token expira:{" "}
                       {new Date(
                         googleConnection.token_expires_at
@@ -224,16 +234,16 @@ export default async function DashboardPage({
               <DisconnectCalendarButton connectionId={googleConnection.id} />
             </div>
           ) : (
-            <div className="flex items-center justify-between rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-4">
+            <div className="flex items-center justify-between rounded-2xl border border-dashed border-[#C2CDCF] bg-white px-5 py-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                  <Calendar className="h-5 w-5 text-slate-400" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                  <Calendar className="h-5 w-5 text-[#8A9F9F]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-medium text-slate-700">
+                  <span className="text-sm font-medium text-[#64797C]">
                     Google Calendar
                   </span>
-                  <span className="text-xs text-slate-400">No conectado</span>
+                  <span className="text-xs text-[#8A9F9F]">No conectado</span>
                 </div>
               </div>
 
@@ -254,47 +264,47 @@ export default async function DashboardPage({
           {/* Event types card */}
           <Link
             href="/dashboard/event-types"
-            className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-slate-300"
+            className="group flex items-center justify-between rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card transition-colors hover:border-[#8A9F9F]"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                <CalendarDays className="h-5 w-5 text-slate-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                <CalendarDays className="h-5 w-5 text-[#64797C]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-sm font-medium text-[#37585A]">
                   Tipos de evento
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-[#8A9F9F]">
                   {items.length === 0
                     ? "Ninguno creado"
                     : `${items.length} tipo${items.length !== 1 ? "s" : ""}`}
                 </span>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-slate-500" />
+            <ArrowRight className="h-4 w-4 text-[#C2CDCF] transition-colors group-hover:text-[#8A9F9F]" />
           </Link>
 
           {/* Availability card */}
           <Link
             href="/dashboard/availability"
-            className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-slate-300"
+            className="group flex items-center justify-between rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card transition-colors hover:border-[#8A9F9F]"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
-                <Settings className="h-5 w-5 text-slate-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                <Settings className="h-5 w-5 text-[#64797C]" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium text-slate-900">
+                <span className="text-sm font-medium text-[#37585A]">
                   Disponibilidad
                 </span>
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-[#8A9F9F]">
                   {(availabilityCount ?? 0) === 0
                     ? "Sin configurar"
                     : `${availabilityCount} franja${availabilityCount !== 1 ? "s" : ""} configurada${availabilityCount !== 1 ? "s" : ""}`}
                 </span>
               </div>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-slate-500" />
+            <ArrowRight className="h-4 w-4 text-[#C2CDCF] transition-colors group-hover:text-[#8A9F9F]" />
           </Link>
         </section>
 
@@ -302,12 +312,12 @@ export default async function DashboardPage({
         {items.length > 0 && (
           <section className="mt-8">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-medium text-slate-700">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-[#64797C]">
                 Tus tipos de evento
               </h2>
               <Link
                 href="/dashboard/event-types"
-                className="text-xs text-slate-400 hover:text-slate-600"
+                className="text-xs text-[#8A9F9F] hover:text-[#64797C]"
               >
                 Ver todos →
               </Link>
@@ -316,7 +326,7 @@ export default async function DashboardPage({
               {items.slice(0, 3).map((et) => (
                 <div
                   key={et.id}
-                  className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                  className="flex items-center gap-4 rounded-xl border border-[#C2CDCF] bg-white px-4 py-3"
                 >
                   <div
                     className="h-3 w-3 rounded-full"
@@ -325,18 +335,18 @@ export default async function DashboardPage({
                   <span
                     className={`text-sm ${
                       et.is_active
-                        ? "font-medium text-slate-900"
-                        : "text-slate-400"
+                        ? "font-medium text-[#37585A]"
+                        : "text-[#8A9F9F]"
                     }`}
                   >
                     {et.title}
                   </span>
-                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                  <div className="flex items-center gap-1 text-xs text-[#8A9F9F]">
                     <Clock className="h-3 w-3" />
                     {et.duration_minutes} min
                   </div>
                   {!et.is_active && (
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-400">
+                    <span className="rounded bg-[#F5F5F5] px-1.5 py-0.5 text-xs text-[#8A9F9F]">
                       Inactivo
                     </span>
                   )}
@@ -347,12 +357,12 @@ export default async function DashboardPage({
         )}
 
         {items.length === 0 && (
-          <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-            <CalendarDays className="mb-4 h-10 w-10 text-slate-300" />
-            <p className="text-sm font-medium text-slate-600">
+          <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#C2CDCF] bg-white px-6 py-16 text-center">
+            <CalendarDays className="mb-4 h-10 w-10 text-[#C2CDCF]" />
+            <p className="text-sm font-medium text-[#64797C]">
               Todavía no tienes tipos de evento
             </p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8A9F9F]">
               Crea tu primer tipo de evento para que puedan agendarte.
             </p>
             <Button

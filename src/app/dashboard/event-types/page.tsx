@@ -57,17 +57,17 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
   const username = profile?.username ?? "tu-usuario"
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
+    <div className="min-h-screen bg-[#F7F8F8]">
+      <header className="border-b border-[#C2CDCF] bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="text-slate-400 hover:text-slate-600"
+              className="text-[#8A9F9F] hover:text-[#64797C]"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-lg font-semibold text-slate-900">
+            <h1 className="text-lg font-semibold text-[#37585A]">
               Tipos de evento
             </h1>
           </div>
@@ -87,12 +87,12 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
         )}
 
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-            <CalendarDays className="mb-4 h-10 w-10 text-slate-300" />
-            <p className="text-sm font-medium text-slate-600">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#C2CDCF] bg-white px-6 py-16 text-center">
+            <CalendarDays className="mb-4 h-10 w-10 text-[#C2CDCF]" />
+            <p className="text-sm font-medium text-[#64797C]">
               No tienes tipos de evento
             </p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-[#8A9F9F]">
               Crea tu primer tipo de evento para que puedan agendarte.
             </p>
             <Button
@@ -105,55 +105,59 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
             </Button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {items.map((et) => (
+          /* Cal.com style: one shared card with rows, not individual cards */
+          <div className="overflow-hidden rounded-2xl border border-[#C2CDCF] bg-white shadow-card">
+            {items.map((et, idx) => (
               <div
                 key={et.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm"
+                className={`flex items-center gap-0 ${
+                  idx < items.length - 1 ? "border-b border-[#C2CDCF]" : ""
+                }`}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: et.color }}
-                  />
-                  <div className="flex flex-col">
+                {/* Event type color strip — 3px left border */}
+                <div
+                  className="w-1 self-stretch shrink-0"
+                  style={{ backgroundColor: et.color }}
+                />
+
+                {/* Content */}
+                <div className="flex flex-1 items-center justify-between px-5 py-4 min-w-0">
+                  <div className="flex min-w-0 flex-col gap-0.5">
                     <span
                       className={`text-sm font-medium ${
-                        et.is_active ? "text-slate-900" : "text-slate-400"
+                        et.is_active ? "text-[#37585A]" : "text-[#8A9F9F]"
                       }`}
                     >
                       {et.title}
                     </span>
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-2 text-xs text-[#8A9F9F]">
+                      <Clock className="h-3 w-3 shrink-0" />
                       <span>{et.duration_minutes} min</span>
                       <span>·</span>
-                      <span>/{username}/{et.slug}</span>
+                      <span className="truncate">/{username}/{et.slug}</span>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2">
-                  <ToggleActiveButton
-                    eventTypeId={et.id}
-                    isActive={et.is_active}
-                  />
-                  <Button
-                    render={
-                      <Link
-                        href={`/dashboard/event-types/${et.id}/edit`}
-                      />
-                    }
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 w-8 p-0 text-slate-400 hover:text-slate-700"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <DeleteEventTypeButton
-                    eventTypeId={et.id}
-                    title={et.title}
-                  />
+                  <div className="ml-4 flex shrink-0 items-center gap-2">
+                    <ToggleActiveButton
+                      eventTypeId={et.id}
+                      isActive={et.is_active}
+                    />
+                    <Button
+                      render={
+                        <Link href={`/dashboard/event-types/${et.id}/edit`} />
+                      }
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-[#8A9F9F] hover:text-[#64797C]"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <DeleteEventTypeButton
+                      eventTypeId={et.id}
+                      title={et.title}
+                    />
+                  </div>
                 </div>
               </div>
             ))}

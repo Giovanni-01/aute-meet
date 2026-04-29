@@ -131,7 +131,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="title"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-medium text-[#64797C]"
         >
           Título *
         </label>
@@ -141,7 +141,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Ej. Reunión de 30 minutos"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+          className="w-full rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#8A9F9F] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
         />
         {errors.title && (
           <p className="text-xs text-red-600">{errors.title}</p>
@@ -152,12 +152,12 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="slug"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-medium text-[#64797C]"
         >
           Slug (URL) *
         </label>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-400">/tu-usuario/</span>
+          <span className="text-sm text-[#8A9F9F]">/tu-usuario/</span>
           <input
             id="slug"
             type="text"
@@ -167,7 +167,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
               setSlugManuallyEdited(true)
             }}
             placeholder="reunion-30min"
-            className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            className="flex-1 rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#8A9F9F] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
           />
         </div>
         {errors.slug && (
@@ -179,7 +179,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
       <div className="space-y-1.5">
         <label
           htmlFor="description"
-          className="block text-sm font-medium text-slate-700"
+          className="block text-sm font-medium text-[#64797C]"
         >
           Descripción
         </label>
@@ -189,7 +189,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
           placeholder="Describe brevemente de qué se trata esta reunión"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+          className="w-full rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] placeholder:text-[#8A9F9F] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
         />
         {errors.description && (
           <p className="text-xs text-red-600">{errors.description}</p>
@@ -198,7 +198,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
 
       {/* Duration */}
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-[#64797C]">
           Duración *
         </label>
         <div className="flex flex-wrap gap-2">
@@ -209,8 +209,8 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
               onClick={() => setDuration(d)}
               className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
                 duration === d
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 text-slate-600 hover:border-slate-400"
+                  ? "border-[#64797C] bg-[#64797C] text-white"
+                  : "border-[#C2CDCF] text-[#64797C] hover:border-[#8A9F9F]"
               }`}
             >
               {d} min
@@ -227,7 +227,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
         <div className="space-y-1.5">
           <label
             htmlFor="buffer_before"
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-[#64797C]"
           >
             Buffer antes (min)
           </label>
@@ -238,13 +238,13 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
             max={60}
             value={bufferBefore}
             onChange={(e) => setBufferBefore(parseInt(e.target.value) || 0)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            className="w-full rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
           />
         </div>
         <div className="space-y-1.5">
           <label
             htmlFor="buffer_after"
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-[#64797C]"
           >
             Buffer después (min)
           </label>
@@ -255,14 +255,14 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
             max={60}
             value={bufferAfter}
             onChange={(e) => setBufferAfter(parseInt(e.target.value) || 0)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            className="w-full rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
           />
         </div>
       </div>
 
       {/* Color */}
       <div className="space-y-1.5">
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-[#64797C]">
           Color
         </label>
         <div className="flex gap-2">
@@ -273,7 +273,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
               onClick={() => setColor(c)}
               className={`h-8 w-8 rounded-full border-2 transition-all ${
                 color === c
-                  ? "border-slate-900 scale-110"
+                  ? "border-[#64797C] scale-110"
                   : "border-transparent hover:scale-105"
               }`}
               style={{ backgroundColor: c }}
@@ -292,7 +292,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
             aria-checked={isActive}
             onClick={() => setIsActive(!isActive)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-              isActive ? "bg-slate-900" : "bg-slate-300"
+              isActive ? "bg-[#64797C]" : "bg-[#C2CDCF]"
             }`}
           >
             <span
@@ -301,7 +301,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
               }`}
             />
           </button>
-          <span className="text-sm text-slate-700">
+          <span className="text-sm text-[#64797C]">
             {isActive ? "Activo" : "Inactivo"}
           </span>
         </div>
