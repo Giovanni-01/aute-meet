@@ -11,6 +11,10 @@ import {
   TriangleAlert,
   Calendar,
   Link2,
+  Clock,
+  Plus,
+  ArrowRight,
+  Settings,
 } from "lucide-react"
 
 interface DashboardPageProps {
@@ -26,6 +30,15 @@ type CalendarConnection = {
   provider_account_email: string
   token_expires_at: string | null
   created_at: string
+}
+
+type EventType = {
+  id: string
+  title: string
+  slug: string
+  duration_minutes: number
+  color: string
+  is_active: boolean
 }
 
 const CALENDAR_ERROR_MESSAGES: Record<string, string> = {
@@ -58,7 +71,7 @@ export default async function DashboardPage({
     redirect("/login")
   }
 
-  // Fetch the user's calendar connections (RLS ensures only their rows)
+  // Fetch calendar connections
   const { data: connections } = await supabase
     .from("calendar_connections")
     .select("id, provider, provider_account_email, token_expires_at, created_at")
@@ -66,6 +79,21 @@ export default async function DashboardPage({
     .order("created_at", { ascending: false })
 
   const googleConnection = (connections as CalendarConnection[] | null)?.[0] ?? null
+
+  // Fetch event types
+  const { data: eventTypes } = await supabase
+    .from("event_types")
+    .select("id, title, slug, duration_minutes, color, is_active")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+
+  const items = (eventTypes as EventType[] | null) ?? []
+
+  // Fetch availability rule count
+  const { count: availabilityCount } = await supabase
+    .from("availability_rules")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
 
   const { calendar_connected, calendar_error } = await searchParams
 
@@ -164,7 +192,6 @@ export default async function DashboardPage({
           </h2>
 
           {googleConnection ? (
-            /* Connected state */
             <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
@@ -197,7 +224,6 @@ export default async function DashboardPage({
               <DisconnectCalendarButton connectionId={googleConnection.id} />
             </div>
           ) : (
-            /* Disconnected state */
             <div className="flex items-center justify-between rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
@@ -207,9 +233,7 @@ export default async function DashboardPage({
                   <span className="text-sm font-medium text-slate-700">
                     Google Calendar
                   </span>
-                  <span className="text-xs text-slate-400">
-                    No conectado
-                  </span>
+                  <span className="text-xs text-slate-400">No conectado</span>
                 </div>
               </div>
 
@@ -225,16 +249,122 @@ export default async function DashboardPage({
           )}
         </section>
 
-        {/* ── Event types placeholder ── */}
-        <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-          <CalendarDays className="mb-4 h-10 w-10 text-slate-300" />
-          <p className="text-sm font-medium text-slate-600">
-            Todavía no tienes tipos de evento
-          </p>
-          <p className="mt-1 text-sm text-slate-400">
-            Pronto podrás crear y gestionar tus reuniones desde aquí.
-          </p>
-        </div>
+        {/* ── Quick actions ── */}
+        <section className="mt-8 grid gap-4 sm:grid-cols-2">
+          {/* Event types card */}
+          <Link
+            href="/dashboard/event-types"
+            className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-slate-300"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                <CalendarDays className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-slate-900">
+                  Tipos de evento
+                </span>
+                <span className="text-xs text-slate-400">
+                  {items.length === 0
+                    ? "Ninguno creado"
+                    : `${items.length} tipo${items.length !== 1 ? "s" : ""}`}
+                </span>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-slate-500" />
+          </Link>
+
+          {/* Availability card */}
+          <Link
+            href="/dashboard/availability"
+            className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm transition-colors hover:border-slate-300"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                <Settings className="h-5 w-5 text-slate-600" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-slate-900">
+                  Disponibilidad
+                </span>
+                <span className="text-xs text-slate-400">
+                  {(availabilityCount ?? 0) === 0
+                    ? "Sin configurar"
+                    : `${availabilityCount} franja${availabilityCount !== 1 ? "s" : ""} configurada${availabilityCount !== 1 ? "s" : ""}`}
+                </span>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-slate-300 transition-colors group-hover:text-slate-500" />
+          </Link>
+        </section>
+
+        {/* ── Recent event types preview ── */}
+        {items.length > 0 && (
+          <section className="mt-8">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-medium text-slate-700">
+                Tus tipos de evento
+              </h2>
+              <Link
+                href="/dashboard/event-types"
+                className="text-xs text-slate-400 hover:text-slate-600"
+              >
+                Ver todos →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {items.slice(0, 3).map((et) => (
+                <div
+                  key={et.id}
+                  className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3"
+                >
+                  <div
+                    className="h-3 w-3 rounded-full"
+                    style={{ backgroundColor: et.color }}
+                  />
+                  <span
+                    className={`text-sm ${
+                      et.is_active
+                        ? "font-medium text-slate-900"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {et.title}
+                  </span>
+                  <div className="flex items-center gap-1 text-xs text-slate-400">
+                    <Clock className="h-3 w-3" />
+                    {et.duration_minutes} min
+                  </div>
+                  {!et.is_active && (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-400">
+                      Inactivo
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {items.length === 0 && (
+          <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+            <CalendarDays className="mb-4 h-10 w-10 text-slate-300" />
+            <p className="text-sm font-medium text-slate-600">
+              Todavía no tienes tipos de evento
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              Crea tu primer tipo de evento para que puedan agendarte.
+            </p>
+            <Button
+              render={<Link href="/dashboard/event-types/new" />}
+              size="sm"
+              className="mt-4 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Crear tipo de evento
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   )
