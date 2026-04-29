@@ -17,9 +17,6 @@ export interface Slot {
   end: string
 }
 
-/** Minimum booking notice in minutes (2 hours). */
-const MIN_NOTICE_MINUTES = 120
-
 /**
  * Determines whether [candidateStart, candidateEnd) overlaps with any period
  * in the given list.
@@ -32,7 +29,6 @@ function overlapsAny(
   return periods.some((p) => {
     const pStart = parseISO(p.start)
     const pEnd = parseISO(p.end)
-    // Overlap condition: candidateStart < pEnd AND candidateEnd > pStart
     return isBefore(candidateStart, pEnd) && isAfter(candidateEnd, pStart)
   })
 }
@@ -56,6 +52,8 @@ interface CalculateSlotsInput {
   bufferAfter: number
   busyPeriods: TimePeriod[]
   existingBookings: TimePeriod[]
+  /** Minimum booking notice in minutes. Defaults to 120. Pass 0 for host-initiated actions. */
+  minNoticeMinutes?: number
 }
 
 /**
@@ -74,17 +72,17 @@ export function calculateSlots(input: CalculateSlotsInput): Slot[] {
     bufferAfter,
     busyPeriods,
     existingBookings,
+    minNoticeMinutes = 120,
   } = input
 
-  // Earliest allowed slot start (now + MIN_NOTICE)
-  const minStart = addMinutes(new Date(), MIN_NOTICE_MINUTES)
+  // Earliest allowed slot start
+  const minStart = addMinutes(new Date(), minNoticeMinutes)
 
   // Determine the day-of-week for `date` in the host's timezone.
   // Use noon to avoid any DST edge-cases at midnight.
   const noonUtc = fromZonedTime(`${date}T12:00:00`, timezone)
   const dayOfWeek = getDay(noonUtc) // 0 = Sunday
 
-  // Filter rules that apply to this day
   const rulesForDay = availabilityRules.filter(
     (r) => r.day_of_week === dayOfWeek
   )
@@ -96,7 +94,6 @@ export function calculateSlots(input: CalculateSlotsInput): Slot[] {
     const { hours: startH, minutes: startM } = parseTime(rule.start_time)
     const { hours: endH, minutes: endM } = parseTime(rule.end_time)
 
-    // Convert rule start/end to UTC
     const windowStart = fromZonedTime(
       `${date}T${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00`,
       timezone
@@ -111,12 +108,9 @@ export function calculateSlots(input: CalculateSlotsInput): Slot[] {
     while (true) {
       const slotEnd = addMinutes(cursor, durationMinutes)
 
-      // Stop if slot would extend beyond the availability window
       if (isAfter(slotEnd, windowEnd)) break
 
-      // Enforce min notice
       if (isAfter(cursor, minStart)) {
-        // Expand by buffers for conflict detection
         const bufferedStart = addMinutes(cursor, -bufferBefore)
         const bufferedEnd = addMinutes(slotEnd, bufferAfter)
 

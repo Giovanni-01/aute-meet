@@ -5,6 +5,7 @@ export interface EventTypeInput {
   duration_minutes: number
   buffer_before_minutes?: number
   buffer_after_minutes?: number
+  min_notice_minutes?: number
   color?: string
   is_active?: boolean
 }
@@ -17,6 +18,7 @@ export interface EventTypeError {
 const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const HEX_COLOR_REGEX = /^#[0-9A-Fa-f]{6}$/
 const ALLOWED_DURATIONS = [15, 30, 45, 60, 90, 120]
+const ALLOWED_NOTICE_MINUTES = [30, 60, 120, 240, 480, 720, 1440, 2880]
 
 export function validateEventType(
   input: Partial<EventTypeInput>,
@@ -83,6 +85,15 @@ export function validateEventType(
       errors.push({
         field: "buffer_after_minutes",
         message: "El buffer después debe ser entre 0 y 60 minutos.",
+      })
+    }
+  }
+
+  if (input.min_notice_minutes !== undefined) {
+    if (!ALLOWED_NOTICE_MINUTES.includes(input.min_notice_minutes)) {
+      errors.push({
+        field: "min_notice_minutes",
+        message: "Valor de antelación mínima no válido.",
       })
     }
   }

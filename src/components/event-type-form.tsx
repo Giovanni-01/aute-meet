@@ -7,6 +7,16 @@ import { slugify } from "@/lib/validations/event-type"
 import { Loader2 } from "lucide-react"
 
 const DURATIONS = [15, 30, 45, 60, 90, 120]
+const NOTICE_OPTIONS = [
+  { value: 30, label: "30 min" },
+  { value: 60, label: "1 h" },
+  { value: 120, label: "2 h" },
+  { value: 240, label: "4 h" },
+  { value: 480, label: "8 h" },
+  { value: 720, label: "12 h" },
+  { value: 1440, label: "24 h" },
+  { value: 2880, label: "48 h" },
+]
 const COLORS = [
   "#1F3A68",
   "#2563EB",
@@ -27,6 +37,7 @@ interface EventTypeFormProps {
     duration_minutes: number
     buffer_before_minutes: number
     buffer_after_minutes: number
+    min_notice_minutes: number
     color: string
     is_active: boolean
   }
@@ -50,6 +61,9 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
   )
   const [bufferAfter, setBufferAfter] = useState(
     initialData?.buffer_after_minutes ?? 0
+  )
+  const [minNotice, setMinNotice] = useState(
+    initialData?.min_notice_minutes ?? 120
   )
   const [color, setColor] = useState(initialData?.color ?? "#1F3A68")
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true)
@@ -78,6 +92,7 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
       duration_minutes: duration,
       buffer_before_minutes: bufferBefore,
       buffer_after_minutes: bufferAfter,
+      min_notice_minutes: minNotice,
       color,
       is_active: isActive,
     }
@@ -258,6 +273,35 @@ export function EventTypeForm({ initialData }: EventTypeFormProps) {
             className="w-full rounded-lg border border-[#C2CDCF] px-3 py-2 text-sm text-[#1A1A1A] focus:border-[#64797C] focus:outline-none focus:ring-1 focus:ring-[#64797C]"
           />
         </div>
+      </div>
+
+      {/* Min notice */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-[#64797C]">
+          Antelación mínima
+        </label>
+        <p className="text-xs text-[#8A9F9F]">
+          Tiempo mínimo de antelación con el que se puede reservar.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {NOTICE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setMinNotice(opt.value)}
+              className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
+                minNotice === opt.value
+                  ? "border-[#64797C] bg-[#64797C] text-white"
+                  : "border-[#C2CDCF] text-[#64797C] hover:border-[#8A9F9F]"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {errors.min_notice_minutes && (
+          <p className="text-xs text-red-600">{errors.min_notice_minutes}</p>
+        )}
       </div>
 
       {/* Color */}

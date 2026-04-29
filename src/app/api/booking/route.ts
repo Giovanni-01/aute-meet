@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   // ── 3. Load event type ────────────────────────────────────────────────────
   const { data: et } = await db
     .from("event_types")
-    .select("id, title, duration_minutes, buffer_before_minutes, buffer_after_minutes, description")
+    .select("id, title, duration_minutes, buffer_before_minutes, buffer_after_minutes, min_notice_minutes, description")
     .eq("user_id", p.id)
     .eq("slug", slug)
     .eq("is_active", true)
@@ -73,6 +73,7 @@ export async function POST(request: Request) {
     duration_minutes: number
     buffer_before_minutes: number
     buffer_after_minutes: number
+    min_notice_minutes: number
     description: string | null
   }
 
@@ -114,6 +115,7 @@ export async function POST(request: Request) {
     bufferAfter: eventType.buffer_after_minutes ?? 0,
     busyPeriods: [],
     existingBookings,
+    minNoticeMinutes: eventType.min_notice_minutes ?? 120,
   })
 
   const slotStillAvailable = availableSlots.some(

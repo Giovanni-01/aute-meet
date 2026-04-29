@@ -55,7 +55,7 @@ export async function GET(request: Request) {
   // ── 2. Fetch event type ────────────────────────────────────────────────────
   const { data: et, error: etError } = await db
     .from("event_types")
-    .select("id, duration_minutes, buffer_before_minutes, buffer_after_minutes")
+    .select("id, duration_minutes, buffer_before_minutes, buffer_after_minutes, min_notice_minutes")
     .eq("user_id", hostId)
     .eq("slug", slug)
     .eq("is_active", true)
@@ -70,6 +70,7 @@ export async function GET(request: Request) {
     duration_minutes: number
     buffer_before_minutes: number
     buffer_after_minutes: number
+    min_notice_minutes: number
   }
 
   // ── 3. Validate date is within the 30-day booking window ──────────────────
@@ -119,23 +120,36 @@ export async function GET(request: Request) {
       )
     : []
 
-  // ── 7. Existing confirmed bookings for that day ────────────────────────────
+  // ── 7. Check blocked dates ─────────────────────────────────────────────────
+  const { data: blockedDates } = await db
+    .from("blocked_dates")
+    .select("id")
+    .eq("user_id", hostId)
+    .lte("start_date", date)
+    .gte("end_date", date)
+    .limit(1)
+
+  if (blockedDates && blockedDates.length > 0) {
+    return NextResponse.json({ slots: [], timezone })
+  }
+
+  // ── 8. Existing confirmed bookings for that day ────────────────────────────
   const { data: bookings } = await db
     .from("bookings")
-    .select("start_at, end_at")
+    .select("start_time, end_time")
     .eq("event_type_id", eventType.id)
     .eq("status", "confirmed")
-    .gte("start_at", dayStartUtc.toISOString())
-    .lte("start_at", dayEndUtc.toISOString())
+    .gte("start_time", dayStartUtc.toISOString())
+    .lte("start_time", dayEndUtc.toISOString())
 
   const bookingPeriods = (bookings ?? []).map(
-    (b: { start_at: string; end_at: string }) => ({
-      start: b.start_at,
-      end: b.end_at,
+    (b: { start_time: string; end_time: string }) => ({
+      start: b.start_time,
+      end: b.end_time,
     })
   )
 
-  // ── 8. Calculate free slots ───────────────────────────────────────────────
+  // ── 9. Calculate free slots ───────────────────────────────────────────────
   const slots = calculateSlots({
     date,
     timezone,
@@ -145,6 +159,7 @@ export async function GET(request: Request) {
     bufferAfter: eventType.buffer_after_minutes ?? 0,
     busyPeriods,
     existingBookings: bookingPeriods,
+    minNoticeMinutes: eventType.min_notice_minutes ?? 120,
   })
 
   return NextResponse.json({ slots, timezone })

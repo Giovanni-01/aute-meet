@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       duration_minutes: body.duration_minutes!,
       buffer_before_minutes: body.buffer_before_minutes ?? 0,
       buffer_after_minutes: body.buffer_after_minutes ?? 0,
+      min_notice_minutes: body.min_notice_minutes ?? 120,
       color: body.color ?? "#1F3A68",
       is_active: body.is_active ?? true,
     })

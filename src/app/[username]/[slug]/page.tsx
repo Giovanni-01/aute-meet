@@ -49,15 +49,28 @@ export default async function BookingPage({ params }: PageProps) {
     description: string | null
   }
 
-  // ── Load availability rules (to tell the widget which days are bookable) ──
-  const { data: rules } = await db
-    .from("availability_rules")
-    .select("day_of_week")
-    .eq("user_id", p.id)
+  // ── Load availability rules + blocked dates in parallel ──────────────────
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [rulesResult, blockedResult] = await Promise.all([
+    db.from("availability_rules").select("day_of_week").eq("user_id", p.id),
+    db
+      .from("blocked_dates")
+      .select("start_date, end_date")
+      .eq("user_id", p.id)
+      .gte("end_date", today),
+  ])
 
   const availableDayOfWeeks = [
-    ...new Set((rules ?? []).map((r: { day_of_week: number }) => r.day_of_week)),
+    ...new Set(
+      (rulesResult.data ?? []).map((r: { day_of_week: number }) => r.day_of_week)
+    ),
   ]
+
+  const blockedDateRanges = (blockedResult.data ?? []) as Array<{
+    start_date: string
+    end_date: string
+  }>
 
   // Human-readable timezone label
   const tzLabel = new Intl.DateTimeFormat("es-ES", {
@@ -78,6 +91,7 @@ export default async function BookingPage({ params }: PageProps) {
               slug={slug}
               timezone={timezone}
               availableDayOfWeeks={availableDayOfWeeks}
+              blockedDateRanges={blockedDateRanges}
               durationMinutes={eventType.duration_minutes}
               hostName={p.full_name}
               hostAvatarUrl={p.avatar_url}

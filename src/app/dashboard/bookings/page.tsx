@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { CancelBookingButton } from "@/components/cancel-booking-button"
+import { RescheduleModalTrigger } from "@/components/reschedule-modal-trigger"
 import { ArrowLeft, CalendarDays, Clock, Video } from "lucide-react"
 
 interface PageProps {
@@ -20,6 +21,7 @@ type Booking = {
   event_types: {
     id: string
     title: string
+    slug: string
     duration_minutes: number
     color: string
   } | null
@@ -60,7 +62,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   let query = supabase
     .from("bookings")
     .select(
-      "id, attendee_name, attendee_email, attendee_notes, start_time, end_time, meet_link, status, event_types(id, title, duration_minutes, color)"
+      "id, attendee_name, attendee_email, attendee_notes, start_time, end_time, meet_link, status, event_types(id, title, slug, duration_minutes, color)"
     )
     .eq("host_user_id", user.id)
 
@@ -75,17 +77,14 @@ export default async function BookingsPage({ searchParams }: PageProps) {
     query = query.order("start_time", { ascending: false })
   }
 
-  const { data: bookings } = await query
-  const items = (bookings as Booking[] | null) ?? []
+  const [bookingsResult, profileResult] = await Promise.all([
+    query,
+    supabase.from("profiles").select("username, timezone").eq("id", user.id).single(),
+  ])
 
-  // Load host timezone for display
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("timezone")
-    .eq("id", user.id)
-    .single()
-
-  const timezone = (profile?.timezone as string | undefined) ?? "Europe/Madrid"
+  const items = (bookingsResult.data as Booking[] | null) ?? []
+  const timezone = (profileResult.data?.timezone as string | undefined) ?? "Europe/Madrid"
+  const username = (profileResult.data?.username as string | undefined) ?? ""
 
   return (
     <div className="min-h-screen bg-[#F7F8F8]">
@@ -203,16 +202,25 @@ export default async function BookingsPage({ searchParams }: PageProps) {
                         )}
                       </div>
 
-                      {/* Cancel action (only for upcoming confirmed) */}
-                      {booking.status === "confirmed" &&
-                        filter === "upcoming" && (
-                          <div className="flex justify-end border-t border-[#C2CDCF] pt-3">
-                            <CancelBookingButton
+                      {/* Actions (upcoming confirmed only) */}
+                      {booking.status === "confirmed" && filter === "upcoming" && (
+                        <div className="flex items-center justify-end gap-2 border-t border-[#C2CDCF] pt-3">
+                          {et?.slug && (
+                            <RescheduleModalTrigger
                               bookingId={booking.id}
+                              username={username}
+                              slug={et.slug}
+                              timezone={timezone}
                               attendeeName={booking.attendee_name}
+                              currentStartTime={booking.start_time}
                             />
-                          </div>
-                        )}
+                          )}
+                          <CancelBookingButton
+                            bookingId={booking.id}
+                            attendeeName={booking.attendee_name}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

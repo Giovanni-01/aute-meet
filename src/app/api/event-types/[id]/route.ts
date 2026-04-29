@@ -61,6 +61,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   if (body.duration_minutes !== undefined) update.duration_minutes = body.duration_minutes
   if (body.buffer_before_minutes !== undefined) update.buffer_before_minutes = body.buffer_before_minutes
   if (body.buffer_after_minutes !== undefined) update.buffer_after_minutes = body.buffer_after_minutes
+  if (body.min_notice_minutes !== undefined) update.min_notice_minutes = body.min_notice_minutes
   if (body.color !== undefined) update.color = body.color
   if (body.is_active !== undefined) update.is_active = body.is_active
 

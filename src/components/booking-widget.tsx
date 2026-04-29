@@ -59,6 +59,7 @@ interface BookingWidgetProps {
   slug: string
   timezone: string
   availableDayOfWeeks: number[] // 0 = Sunday (JS)
+  blockedDateRanges?: Array<{ start_date: string; end_date: string }>
   durationMinutes: number
   // Host / event type info (rendered in the left info panel)
   hostName: string
@@ -101,6 +102,13 @@ function mondayFirstDow(date: Date): number {
   return (getDay(date) + 6) % 7
 }
 
+function isDateBlocked(
+  dateStr: string,
+  ranges: Array<{ start_date: string; end_date: string }>
+): boolean {
+  return ranges.some((r) => dateStr >= r.start_date && dateStr <= r.end_date)
+}
+
 function getInitials(name: string): string {
   return name
     .split(" ")
@@ -115,6 +123,7 @@ function getInitials(name: string): string {
 interface MiniCalendarProps {
   currentMonth: Date
   availableDayOfWeeks: number[]
+  blockedDateRanges: Array<{ start_date: string; end_date: string }>
   selectedDate: string | null
   onSelectDate: (date: string) => void
   onPrev: () => void
@@ -124,6 +133,7 @@ interface MiniCalendarProps {
 function MiniCalendar({
   currentMonth,
   availableDayOfWeeks,
+  blockedDateRanges,
   selectedDate,
   onSelectDate,
   onPrev,
@@ -197,7 +207,8 @@ function MiniCalendar({
           const isPast = isBefore(day, today)
           const isBeyond = isAfter(day, maxDate)
           const hasAvailability = availableDayOfWeeks.includes(jsDoW)
-          const disabled = isPast || isBeyond || !hasAvailability
+          const blocked = isDateBlocked(dateStr, blockedDateRanges)
+          const disabled = isPast || isBeyond || !hasAvailability || blocked
           const isSelected = selectedDate === dateStr
           const isToday = isSameDay(day, today)
 
@@ -416,6 +427,7 @@ export function BookingWidget({
   slug,
   timezone,
   availableDayOfWeeks,
+  blockedDateRanges = [],
   durationMinutes,
   hostName,
   hostAvatarUrl,
@@ -712,6 +724,7 @@ export function BookingWidget({
         <MiniCalendar
           currentMonth={currentMonth}
           availableDayOfWeeks={availableDayOfWeeks}
+          blockedDateRanges={blockedDateRanges}
           selectedDate={selectedDate}
           onSelectDate={handleDateSelect}
           onPrev={handlePrevMonth}
