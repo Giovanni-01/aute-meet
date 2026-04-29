@@ -2,14 +2,13 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { DeleteEventTypeButton } from "@/components/delete-event-type-button"
 import { ToggleActiveButton } from "@/components/toggle-active-button"
+import { EventTypeActionsMenu } from "@/components/event-type-actions-menu"
 import {
   ArrowLeft,
   CalendarDays,
   CheckCircle,
   Clock,
-  Pencil,
   Plus,
 } from "lucide-react"
 
@@ -143,19 +142,11 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
                       eventTypeId={et.id}
                       isActive={et.is_active}
                     />
-                    <Button
-                      render={
-                        <Link href={`/dashboard/event-types/${et.id}/edit`} />
-                      }
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-[#8A9F9F] hover:text-[#64797C]"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <DeleteEventTypeButton
+                    <EventTypeActionsMenu
                       eventTypeId={et.id}
                       title={et.title}
+                      slug={et.slug}
+                      username={username}
                     />
                   </div>
                 </div>

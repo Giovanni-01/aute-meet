@@ -746,13 +746,14 @@ export function BookingWidget({
             )}
 
             {!isLoadingSlots && slots.length > 0 && (
-              <div className="flex flex-col gap-2 overflow-y-auto">
+              <div className="flex flex-col gap-2 overflow-y-auto max-h-[272px] pr-1">
                 {slots.map((slot) => (
                   <button
                     key={slot.start}
                     onClick={() => handleSlotSelect(slot)}
-                    className="rounded-xl border border-[#C2CDCF] bg-white px-3 py-2.5 text-sm font-medium text-[#37585A] transition-colors hover:border-[#64797C] hover:bg-[#64797C] hover:text-white"
+                    className="flex items-center gap-2.5 rounded-xl border border-[#C2CDCF] bg-white px-3 py-2.5 text-sm font-medium text-[#37585A] transition-colors hover:border-[#64797C] hover:bg-[#64797C] hover:text-white group"
                   >
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-green-400 group-hover:bg-green-200" />
                     {formatTime(slot.start, timezone)}
                   </button>
                 ))}

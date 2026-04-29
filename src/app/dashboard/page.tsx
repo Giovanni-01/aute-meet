@@ -15,6 +15,7 @@ import {
   Plus,
   ArrowRight,
   Settings,
+  ExternalLink,
 } from "lucide-react"
 
 interface DashboardPageProps {
@@ -95,6 +96,14 @@ export default async function DashboardPage({
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
 
+  // Fetch username for public profile link
+  const { data: userProfile } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", user.id)
+    .single()
+  const publicUsername = userProfile?.username as string | undefined
+
   const { calendar_connected, calendar_error } = await searchParams
 
   const displayName =
@@ -135,9 +144,28 @@ export default async function DashboardPage({
             <Link href="/dashboard/availability" className="text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors">
               Disponibilidad
             </Link>
+            <Link href="/dashboard/bookings" className="text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors">
+              Reservas
+            </Link>
+            <Link href="/dashboard/settings" className="text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors">
+              Ajustes
+            </Link>
           </nav>
 
           <div className="flex items-center gap-4">
+            {/* Public profile link */}
+            {publicUsername && (
+              <Link
+                href={`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${publicUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden items-center gap-1.5 text-sm font-medium text-[#64797C] hover:text-[#37585A] transition-colors sm:flex"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Mi página
+              </Link>
+            )}
+
             <div className="flex items-center gap-3">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={avatarUrl} alt={displayName} />
