@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ToggleActiveButton } from "@/components/toggle-active-button"
 import { EventTypeActionsMenu } from "@/components/event-type-actions-menu"
 import {
-  ArrowLeft,
+  ChevronRight,
   CalendarDays,
   CheckCircle,
   Clock,
@@ -59,17 +59,13 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
     <div className="min-h-screen bg-[#F7F8F8]">
       <header className="border-b border-[#C2CDCF] bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="text-[#8A9F9F] hover:text-[#64797C]"
-            >
-              <ArrowLeft className="h-5 w-5" />
+          <nav className="flex items-center gap-1.5 text-sm">
+            <Link href="/dashboard" className="text-[#8A9F9F] transition-colors hover:text-[#64797C]">
+              Dashboard
             </Link>
-            <h1 className="text-lg font-semibold text-[#37585A]">
-              Tipos de evento
-            </h1>
-          </div>
+            <ChevronRight className="h-3.5 w-3.5 text-[#C2CDCF]" />
+            <span className="font-semibold text-[#37585A]">Tipos de evento</span>
+          </nav>
           <Button render={<Link href="/dashboard/event-types/new" />} size="sm" className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
             Nuevo

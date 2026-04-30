@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { ProfileSettingsForm } from "@/components/profile-settings-form"
-import { ArrowLeft } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 export default async function SettingsPage() {
   const supabase = await createClient()
@@ -33,16 +33,14 @@ export default async function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#F7F8F8]">
       <header className="border-b border-[#C2CDCF] bg-white">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4">
-          <Link
-            href="/dashboard"
-            className="text-[#8A9F9F] hover:text-[#64797C]"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-lg font-semibold text-[#37585A]">
-            Ajustes de perfil
-          </h1>
+        <div className="mx-auto max-w-3xl px-6 py-4">
+          <nav className="flex items-center gap-1.5 text-sm">
+            <Link href="/dashboard" className="text-[#8A9F9F] transition-colors hover:text-[#64797C]">
+              Dashboard
+            </Link>
+            <ChevronRight className="h-3.5 w-3.5 text-[#C2CDCF]" />
+            <span className="font-semibold text-[#37585A]">Ajustes de perfil</span>
+          </nav>
         </div>
       </header>
 

@@ -179,7 +179,7 @@ export async function POST(request: Request) {
           start: { dateTime: startAt.toISOString(), timeZone: timezone },
           end: { dateTime: endAt.toISOString(), timeZone: timezone },
           attendees: [
-            { email: hostEmail, organizer: true },
+            { email: hostEmail },
             { email: body.attendee_email, displayName: body.attendee_name },
             ...guestEmails.map((e) => ({ email: e })),
           ],
