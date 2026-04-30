@@ -7,18 +7,24 @@ import { Unlink } from "lucide-react"
 
 interface DisconnectCalendarButtonProps {
   connectionId: string
+  provider?: "google" | "apple"
 }
 
 export function DisconnectCalendarButton({
   connectionId,
+  provider = "google",
 }: DisconnectCalendarButtonProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   async function handleDisconnect() {
     setLoading(true)
+    const url =
+      provider === "apple"
+        ? "/api/calendar/apple/disconnect"
+        : "/api/calendar/google/disconnect"
     try {
-      const res = await fetch("/api/calendar/google/disconnect", {
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ connection_id: connectionId }),

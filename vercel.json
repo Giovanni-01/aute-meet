@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fetch-readai-notes",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

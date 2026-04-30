@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { createServiceClient } from "@/lib/supabase/service"
 import { getCalendarClient } from "@/lib/google/calendar"
+import { createAppleEvent } from "@/lib/apple/caldav"
 import { calculateSlots } from "@/lib/booking/slots"
 import { fromZonedTime } from "date-fns-tz"
 import { parseISO } from "date-fns"
@@ -130,19 +131,41 @@ export async function POST(request: Request) {
     )
   }
 
-  // ── 6. Create Google Calendar event with Meet link ─────────────────────────
-  const { data: conn } = await db
-    .from("calendar_connections")
-    .select("id, access_token, refresh_token, token_expires_at, provider_account_email")
-    .eq("user_id", p.id)
-    .eq("provider", "google")
-    .eq("is_primary", true)
-    .maybeSingle()
+  // ── 6. Shared event metadata ──────────────────────────────────────────────
+  const guestEmails = body.guest_emails ?? []
+  const guestNames = guestEmails.map((e) => e.split("@")[0]).join(", ")
+  const eventSummary = guestNames
+    ? `${eventType.title} — ${p.full_name} y ${body.attendee_name}, ${guestNames}`
+    : `${eventType.title} — ${p.full_name} y ${body.attendee_name}`
+  const descriptionParts: string[] = []
+  if (body.attendee_notes) {
+    descriptionParts.push(`Notas del asistente:\n${body.attendee_notes}`)
+  }
+  descriptionParts.push("Agendado a través de Aute Meet")
 
+  // ── 6a. Fetch calendar connections in parallel ─────────────────────────────
+  const [{ data: googleConn }, { data: appleConn }] = await Promise.all([
+    db
+      .from("calendar_connections")
+      .select("id, access_token, refresh_token, token_expires_at, provider_account_email")
+      .eq("user_id", p.id)
+      .eq("provider", "google")
+      .eq("is_primary", true)
+      .maybeSingle(),
+    db
+      .from("calendar_connections")
+      .select("access_token, refresh_token")
+      .eq("user_id", p.id)
+      .eq("provider", "apple")
+      .maybeSingle(),
+  ])
+
+  // ── 6b. Create Google Calendar event with Meet link ────────────────────────
   let googleEventId: string | null = null
   let meetLink: string | null = null
 
-  if (conn) {
+  if (googleConn) {
+    const conn = googleConn
     try {
       const calendar = await getCalendarClient(
         conn as {
@@ -156,25 +179,12 @@ export async function POST(request: Request) {
       const hostEmail = (conn as { provider_account_email: string })
         .provider_account_email
 
-      const descriptionParts: string[] = []
-      if (body.attendee_notes) {
-        descriptionParts.push(`Notas del asistente:\n${body.attendee_notes}`)
-      }
-      descriptionParts.push("Agendado a través de Aute Meet")
-
-      const guestEmails = body.guest_emails ?? []
-
-      const guestNames = guestEmails.map((e) => e.split("@")[0]).join(", ")
-      const summary = guestNames
-        ? `${eventType.title} — ${p.full_name} y ${body.attendee_name}, ${guestNames}`
-        : `${eventType.title} — ${p.full_name} y ${body.attendee_name}`
-
       const event = await calendar.events.insert({
         calendarId: "primary",
         conferenceDataVersion: 1,
         sendUpdates: "all",
         requestBody: {
-          summary,
+          summary: eventSummary,
           description: descriptionParts.join("\n\n"),
           start: { dateTime: startAt.toISOString(), timeZone: timezone },
           end: { dateTime: endAt.toISOString(), timeZone: timezone },
@@ -234,6 +244,31 @@ export async function POST(request: Request) {
       { error: "Error al guardar la reserva" },
       { status: 500 }
     )
+  }
+
+  // ── 8. Create Apple Calendar event (if connected) — graceful degradation ──
+  if (appleConn && booking) {
+    const appleDesc = [
+      ...descriptionParts,
+      ...(meetLink ? [`Google Meet: ${meetLink}`] : []),
+    ].join("\n\n")
+
+    createAppleEvent({
+      encryptedAppleId: (
+        appleConn as { access_token: string; refresh_token: string | null }
+      ).access_token,
+      encryptedAppPassword: (
+        appleConn as { access_token: string; refresh_token: string | null }
+      ).refresh_token ?? "",
+      bookingId: (booking as { id: string }).id,
+      summary: eventSummary,
+      startAt,
+      endAt,
+      description: appleDesc,
+      attendeeEmails: [body.attendee_email, ...guestEmails],
+    }).catch((err) => {
+      console.error("[booking] Apple Calendar event creation failed:", err)
+    })
   }
 
   return NextResponse.json({ booking, meetLink, timezone }, { status: 201 })

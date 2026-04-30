@@ -34,11 +34,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   let action = "cancel"
   let newDate: string | undefined
   let newStartTime: string | undefined
+  let cancellationReason: string | undefined
+  let hostNotes: string | undefined
   try {
     const body = await request.json()
     action = body.action ?? "cancel"
     newDate = body.date
     newStartTime = body.start_time
+    cancellationReason = body.cancellation_reason
+    hostNotes = body.host_notes
   } catch {
     // No body → cancel
   }
@@ -96,11 +100,31 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const { error: updateError } = await db
       .from("bookings")
-      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .update({
+        status: "cancelled",
+        cancellation_reason: cancellationReason ?? null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id)
 
     if (updateError) {
       return NextResponse.json({ error: "Error al cancelar" }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // UPDATE NOTES
+  // ════════════════════════════════════════════════════════════
+  if (action === "update_notes") {
+    const { error: updateError } = await db
+      .from("bookings")
+      .update({ host_notes: hostNotes ?? null, updated_at: new Date().toISOString() })
+      .eq("id", id)
+
+    if (updateError) {
+      return NextResponse.json({ error: "Error al guardar notas" }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })

@@ -63,6 +63,22 @@ export async function getCalendarClient(connection: StoredConnection) {
 }
 
 /**
+ * Fetches the description field of a Google Calendar event.
+ * Used to extract Read AI meeting summaries that are appended post-meeting.
+ */
+export async function fetchEventDescription(
+  connection: StoredConnection,
+  googleEventId: string
+): Promise<{ description: string | null }> {
+  const calendar = await getCalendarClient(connection)
+  const { data } = await calendar.events.get({
+    calendarId: "primary",
+    eventId: googleEventId,
+  })
+  return { description: data.description ?? null }
+}
+
+/**
  * Returns busy time windows for the given UTC time range from the host's
  * primary Google Calendar. Returns an empty array if the request fails
  * (so slots are still returned without conflict-checking against Google).

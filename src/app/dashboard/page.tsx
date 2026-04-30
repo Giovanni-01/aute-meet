@@ -3,6 +3,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { DisconnectCalendarButton } from "@/components/disconnect-calendar-button"
+import { ConnectAppleCalendar } from "@/components/connect-apple-calendar"
 import {
   CalendarDays,
   CheckCircle,
@@ -69,14 +70,25 @@ export default async function DashboardPage({
     redirect("/login")
   }
 
-  // Fetch calendar connections
-  const { data: connections } = await supabase
-    .from("calendar_connections")
-    .select("id, provider, provider_account_email, token_expires_at, created_at")
-    .eq("provider", "google")
-    .order("created_at", { ascending: false })
+  // Fetch calendar connections (Google + Apple in parallel)
+  const [{ data: googleConnections }, { data: appleConnections }] =
+    await Promise.all([
+      supabase
+        .from("calendar_connections")
+        .select("id, provider, provider_account_email, token_expires_at, created_at")
+        .eq("provider", "google")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("calendar_connections")
+        .select("id, provider, provider_account_email, created_at")
+        .eq("provider", "apple")
+        .order("created_at", { ascending: false }),
+    ])
 
-  const googleConnection = (connections as CalendarConnection[] | null)?.[0] ?? null
+  const googleConnection =
+    (googleConnections as CalendarConnection[] | null)?.[0] ?? null
+  const appleConnection =
+    (appleConnections as CalendarConnection[] | null)?.[0] ?? null
 
   // Fetch event types
   const { data: eventTypes } = await supabase
@@ -190,6 +202,45 @@ export default async function DashboardPage({
               </Button>
             </div>
           )}
+          {/* Apple Calendar */}
+          <div className="mt-3">
+            {appleConnection ? (
+              <div className="flex items-center justify-between rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                    <Calendar className="h-5 w-5 text-[#64797C]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-[#37585A]">
+                      Apple Calendar
+                    </span>
+                    <span className="text-xs text-[#8A9F9F]">
+                      {appleConnection.provider_account_email}
+                    </span>
+                  </div>
+                </div>
+                <DisconnectCalendarButton
+                  connectionId={appleConnection.id}
+                  provider="apple"
+                />
+              </div>
+            ) : (
+              <div className="flex items-center justify-between rounded-2xl border border-dashed border-[#C2CDCF] bg-white px-5 py-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5]">
+                    <Calendar className="h-5 w-5 text-[#8A9F9F]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-[#64797C]">
+                      Apple Calendar
+                    </span>
+                    <span className="text-xs text-[#8A9F9F]">No conectado</span>
+                  </div>
+                </div>
+                <ConnectAppleCalendar />
+              </div>
+            )}
+          </div>
         </section>
 
         {/* ── Quick actions ── */}

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { AvailabilityEditor } from "@/components/availability-editor"
 import { BlockedDatesEditor } from "@/components/blocked-dates-editor"
@@ -41,30 +40,30 @@ export default async function AvailabilityPage() {
   }>
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-8 space-y-8">
-        {/* Weekly availability */}
-        <section>
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="grid grid-cols-[3fr_2fr] gap-6 items-start">
+        {/* Left column — weekly availability */}
+        <div className="rounded-2xl border border-[#C2CDCF] bg-white p-6 shadow-card">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64797C]">
+            Horario semanal
+          </h2>
           <p className="mb-4 text-sm text-[#8A9F9F]">
-            Configura las franjas horarias en las que estás disponible para
-            reuniones. Las personas solo podrán reservar dentro de estos horarios.
+            Configura las franjas horarias en las que estás disponible para reuniones.
           </p>
-          <div className="rounded-2xl border border-[#C2CDCF] bg-white p-6 shadow-card">
-            <AvailabilityEditor initialRules={normalizedRules} />
-          </div>
-        </section>
+          <AvailabilityEditor initialRules={normalizedRules} />
+        </div>
 
-        {/* Blocked dates */}
-        <section>
+        {/* Right column — blocked dates */}
+        <div className="rounded-2xl border border-[#C2CDCF] bg-white p-6 shadow-card">
           <h2 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#64797C]">
             Fechas bloqueadas
           </h2>
           <p className="mb-4 text-sm text-[#8A9F9F]">
-            Bloquea días concretos o rangos (vacaciones, festivos…). Nadie podrá reservar en esas fechas aunque estén dentro de tu horario habitual.
+            Bloquea días o rangos (vacaciones, festivos…) en los que nadie podrá reservar.
           </p>
-          <div className="rounded-2xl border border-[#C2CDCF] bg-white p-6 shadow-card">
-            <BlockedDatesEditor initialDates={blockedDates} />
-          </div>
-        </section>
+          <BlockedDatesEditor initialDates={blockedDates} />
+        </div>
+      </div>
     </main>
   )
 }

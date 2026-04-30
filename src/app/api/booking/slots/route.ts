@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { getBusyPeriods } from "@/lib/google/calendar"
+import { getAppleBusyPeriods } from "@/lib/apple/caldav"
 import { calculateSlots } from "@/lib/booking/slots"
 import { fromZonedTime } from "date-fns-tz"
 import { addDays, startOfDay } from "date-fns"
@@ -98,27 +99,49 @@ export async function GET(request: Request) {
   const dayStartUtc = fromZonedTime(`${date}T00:00:00`, timezone)
   const dayEndUtc = fromZonedTime(`${date}T23:59:59`, timezone)
 
-  // ── 6. Google Calendar busy times (if connected) ──────────────────────────
-  const { data: conn } = await db
-    .from("calendar_connections")
-    .select("id, access_token, refresh_token, token_expires_at")
-    .eq("user_id", hostId)
-    .eq("provider", "google")
-    .eq("is_primary", true)
-    .maybeSingle()
+  // ── 6. Calendar busy times (Google + Apple, in parallel) ─────────────────
+  const [{ data: googleConn }, { data: appleConn }] = await Promise.all([
+    db
+      .from("calendar_connections")
+      .select("id, access_token, refresh_token, token_expires_at")
+      .eq("user_id", hostId)
+      .eq("provider", "google")
+      .eq("is_primary", true)
+      .maybeSingle(),
+    db
+      .from("calendar_connections")
+      .select("access_token, refresh_token")
+      .eq("user_id", hostId)
+      .eq("provider", "apple")
+      .maybeSingle(),
+  ])
 
-  const busyPeriods = conn
-    ? await getBusyPeriods(
-        conn as {
-          id: string
-          access_token: string
-          refresh_token: string | null
-          token_expires_at: string | null
-        },
-        dayStartUtc,
-        dayEndUtc
-      )
-    : []
+  const [googleBusy, appleBusy] = await Promise.all([
+    googleConn
+      ? getBusyPeriods(
+          googleConn as {
+            id: string
+            access_token: string
+            refresh_token: string | null
+            token_expires_at: string | null
+          },
+          dayStartUtc,
+          dayEndUtc
+        )
+      : Promise.resolve([]),
+    appleConn
+      ? getAppleBusyPeriods(
+          (appleConn as { access_token: string; refresh_token: string | null })
+            .access_token,
+          (appleConn as { access_token: string; refresh_token: string | null })
+            .refresh_token ?? "",
+          dayStartUtc,
+          dayEndUtc
+        )
+      : Promise.resolve([]),
+  ])
+
+  const busyPeriods = [...googleBusy, ...appleBusy]
 
   // ── 7. Check blocked dates ─────────────────────────────────────────────────
   const { data: blockedDates } = await db
