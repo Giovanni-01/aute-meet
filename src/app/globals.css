@@ -52,9 +52,9 @@
 
   /* ── Typography ──────────────────────────────────────────────────────────── */
   /* --font-sofia-sans is set by next/font on <html>; --font-geist-mono by Geist Mono */
-  --font-sans: var(--font-sofia-sans);
+  --font-sans: var(--font-poppins);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sofia-sans);
+  --font-heading: var(--font-poppins);
 
   /* ── Border radius ───────────────────────────────────────────────────────── */
   --radius-sm: calc(var(--radius) * 0.6);
