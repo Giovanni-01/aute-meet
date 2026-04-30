@@ -17,17 +17,17 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("username")
+    .select("username, avatar_url, full_name")
     .eq("id", user.id)
     .single()
 
-  const displayName =
+  const displayName = (profile as any)?.full_name ??
     user.user_metadata?.full_name ??
     user.user_metadata?.name ??
     user.email ??
     "Usuario"
 
-  const avatarUrl: string | undefined =
+  const avatarUrl: string | undefined = (profile as any)?.avatar_url ??
     user.user_metadata?.avatar_url ?? user.user_metadata?.picture
 
   const initials = displayName
