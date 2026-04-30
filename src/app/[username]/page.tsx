@@ -52,69 +52,76 @@ export default async function PublicProfilePage({ params }: PageProps) {
     .toUpperCase()
 
   return (
-    <main className="min-h-screen bg-[#F7F8F8] py-16 px-6">
+    <main className="min-h-screen bg-[#F7F8F8] px-6 py-16">
       <div className="mx-auto max-w-xl">
-        {/* Host info */}
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={p.avatar_url ?? undefined} alt={p.full_name} />
-            <AvatarFallback className="bg-[#64797C] text-xl font-medium text-white">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-[#37585A]">
-              {p.full_name}
-            </h1>
-            {p.bio && (
-              <p className="max-w-sm text-sm text-[#8A9F9F]">{p.bio}</p>
-            )}
+        {/* Profile card */}
+        <div className="mb-6 overflow-hidden rounded-2xl border border-[#C2CDCF] bg-white p-8 shadow-card">
+          <div className="flex items-center gap-5">
+            <Avatar className="h-16 w-16 shrink-0">
+              <AvatarImage src={p.avatar_url ?? undefined} alt={p.full_name} />
+              <AvatarFallback className="bg-[#64797C] text-lg font-medium text-white">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col gap-1 min-w-0">
+              <h1 className="text-xl font-semibold text-[#37585A]">
+                {p.full_name}
+              </h1>
+              {p.bio && (
+                <p className="text-sm text-[#8A9F9F]">{p.bio}</p>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Event type list */}
-        <div className="mt-10 flex flex-col gap-3">
-          {events.length === 0 && (
-            <p className="text-center text-sm text-[#8A9F9F]">
-              Este usuario no tiene tipos de evento disponibles.
-            </p>
-          )}
+        {events.length === 0 ? (
+          <p className="text-center text-sm text-[#8A9F9F]">
+            Este usuario no tiene tipos de evento disponibles.
+          </p>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-[#C2CDCF] bg-white shadow-card">
+            {events.map((et, i) => (
+              <Link
+                key={et.id}
+                href={`/${p.username}/${et.slug}`}
+                className={`group flex items-stretch transition-colors hover:bg-[#F7F8F8]${i < events.length - 1 ? " border-b border-[#C2CDCF]" : ""}`}
+              >
+                {/* Color bar */}
+                <div
+                  className="w-1 shrink-0"
+                  style={{ backgroundColor: et.color }}
+                />
 
-          {events.map((et) => (
-            <Link
-              key={et.id}
-              href={`/${p.username}/${et.slug}`}
-              className="group flex items-center gap-4 rounded-2xl border border-[#C2CDCF] bg-white px-5 py-4 shadow-card transition-colors hover:border-[#8A9F9F]"
-            >
-              <div
-                className="h-10 w-1.5 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: et.color }}
-              />
-              <div className="flex flex-1 flex-col gap-0.5">
-                <span className="text-sm font-medium text-[#37585A] group-hover:text-[#64797C]">
-                  {et.title}
-                </span>
-                {et.description && (
-                  <span className="line-clamp-1 text-xs text-[#8A9F9F]">
-                    {et.description}
+                {/* Content */}
+                <div className="flex flex-1 items-center justify-between gap-4 px-5 py-4">
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="font-medium text-[#37585A] group-hover:text-[#64797C] transition-colors">
+                      {et.title}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-[#8A9F9F]">
+                      <Clock className="h-3.5 w-3.5 shrink-0" />
+                      {et.duration_minutes} min
+                    </span>
+                    {et.description && (
+                      <span className="text-sm text-[#8A9F9F] line-clamp-2">
+                        {et.description}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Book button */}
+                  <span className="shrink-0 rounded-lg border border-[#C2CDCF] px-3 py-1.5 text-sm font-medium text-[#64797C] transition-colors group-hover:border-[#64797C] group-hover:bg-[#64797C] group-hover:text-white">
+                    Reservar ahora →
                   </span>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <div className="flex items-center gap-1 text-xs text-[#8A9F9F]">
-                  <Clock className="h-3.5 w-3.5" />
-                  {et.duration_minutes} min
                 </div>
-                <span className="text-xs font-medium text-[#64797C] group-hover:text-[#37585A] transition-colors">
-                  Reservar →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {/* Aute Meet branding */}
-        <div className="mt-10 flex items-center justify-center gap-2 text-xs text-[#C2CDCF]">
+        {/* Footer branding */}
+        <div className="mt-8 flex items-center justify-center gap-1.5 text-xs text-[#C2CDCF]">
           <CalendarDays className="h-3.5 w-3.5" />
           <span>Powered by Aute Meet</span>
         </div>

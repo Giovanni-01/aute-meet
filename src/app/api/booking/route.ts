@@ -164,12 +164,17 @@ export async function POST(request: Request) {
 
       const guestEmails = body.guest_emails ?? []
 
+      const guestNames = guestEmails.map((e) => e.split("@")[0]).join(", ")
+      const summary = guestNames
+        ? `${eventType.title} — ${p.full_name} y ${body.attendee_name}, ${guestNames}`
+        : `${eventType.title} — ${p.full_name} y ${body.attendee_name}`
+
       const event = await calendar.events.insert({
         calendarId: "primary",
         conferenceDataVersion: 1,
         sendUpdates: "all",
         requestBody: {
-          summary: `${eventType.title} con ${body.attendee_name}`,
+          summary,
           description: descriptionParts.join("\n\n"),
           start: { dateTime: startAt.toISOString(), timeZone: timezone },
           end: { dateTime: endAt.toISOString(), timeZone: timezone },

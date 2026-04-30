@@ -26,12 +26,14 @@ import {
   ChevronLeft,
   ChevronRight,
   CheckCircle,
+  Check,
   Video,
   TriangleAlert,
   Clock,
   Globe,
   Users,
   X,
+  Copy,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -454,6 +456,9 @@ export function BookingWidget({
   const [email, setEmail] = useState("")
   const [notes, setNotes] = useState("")
 
+  // Copy Meet link feedback
+  const [copied, setCopied] = useState(false)
+
   // Guests state
   const [guestsExpanded, setGuestsExpanded] = useState(false)
   const [guestInput, setGuestInput] = useState("")
@@ -581,15 +586,35 @@ export function BookingWidget({
         </div>
 
         {meetLink && (
-          <a
-            href={meetLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-[#C2CDCF] bg-white px-5 py-3 text-sm font-medium text-[#64797C] shadow-card transition-colors hover:border-[#8A9F9F]"
-          >
-            <Video className="h-4 w-4 text-blue-500" />
-            Unirse a Google Meet
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={meetLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 rounded-xl border border-[#C2CDCF] bg-white px-5 py-3 text-sm font-medium text-[#64797C] shadow-card transition-colors hover:border-[#8A9F9F]"
+            >
+              <Video className="h-4 w-4 text-blue-500" />
+              Unirse a Google Meet
+            </a>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(meetLink)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+              title="Copiar enlace"
+              className="flex items-center gap-1.5 rounded-xl border border-[#C2CDCF] bg-white px-3 py-3 text-sm text-[#8A9F9F] shadow-card transition-colors hover:border-[#8A9F9F] hover:text-[#64797C]"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 text-green-500" />
+                  <span className="text-xs text-green-500">Copiado</span>
+                </>
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         )}
 
         <p className="max-w-xs text-xs text-[#8A9F9F]">
