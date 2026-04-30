@@ -14,6 +14,7 @@ const BookingBody = z.object({
   attendee_name: z.string().min(1).max(200),
   attendee_email: z.string().email(),
   attendee_notes: z.string().max(2000).optional(),
+  guest_emails: z.array(z.string().email()).max(10).optional(),
 })
 
 /**
@@ -161,6 +162,8 @@ export async function POST(request: Request) {
       }
       descriptionParts.push("Agendado a través de Aute Meet")
 
+      const guestEmails = body.guest_emails ?? []
+
       const event = await calendar.events.insert({
         calendarId: "primary",
         conferenceDataVersion: 1,
@@ -173,6 +176,7 @@ export async function POST(request: Request) {
           attendees: [
             { email: hostEmail, organizer: true },
             { email: body.attendee_email, displayName: body.attendee_name },
+            ...guestEmails.map((e) => ({ email: e })),
           ],
           conferenceData: {
             createRequest: {
@@ -209,6 +213,7 @@ export async function POST(request: Request) {
       attendee_name: body.attendee_name,
       attendee_email: body.attendee_email,
       attendee_notes: body.attendee_notes ?? null,
+      guest_emails: body.guest_emails ?? [],
       start_time: startAt.toISOString(),
       end_time: endAt.toISOString(),
       google_event_id: googleEventId,

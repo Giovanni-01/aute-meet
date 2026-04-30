@@ -30,6 +30,8 @@ import {
   TriangleAlert,
   Clock,
   Globe,
+  Users,
+  X,
 } from "lucide-react"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -452,6 +454,12 @@ export function BookingWidget({
   const [email, setEmail] = useState("")
   const [notes, setNotes] = useState("")
 
+  // Guests state
+  const [guestsExpanded, setGuestsExpanded] = useState(false)
+  const [guestInput, setGuestInput] = useState("")
+  const [guestEmails, setGuestEmails] = useState<string[]>([])
+  const [guestError, setGuestError] = useState<string | null>(null)
+
   // ── Calendar navigation ────────────────────────────────────────────────────
   function handlePrevMonth() {
     setCurrentMonth((m) => subMonths(m, 1))
@@ -510,6 +518,7 @@ export function BookingWidget({
           attendee_name: name,
           attendee_email: email,
           attendee_notes: notes || undefined,
+          guest_emails: guestEmails.length > 0 ? guestEmails : undefined,
         }),
       })
 
@@ -672,14 +681,130 @@ export function BookingWidget({
               />
             </div>
 
-            <Button
-              type="submit"
-              variant="accent"
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              {isSubmitting ? "Confirmando…" : "Confirmar reserva"}
-            </Button>
+            {/* Guests section */}
+            <div className="flex flex-col gap-2">
+              {!guestsExpanded ? (
+                <button
+                  type="button"
+                  onClick={() => setGuestsExpanded(true)}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-1.5 text-sm text-[#64797C] hover:text-[#37585A] disabled:opacity-50 w-fit"
+                >
+                  <Users className="h-4 w-4" />
+                  Añadir invitados
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Invitados <span className="text-xs font-normal text-[#8A9F9F]">(opcional, máx. 10)</span></Label>
+                  </div>
+
+                  {/* Chips */}
+                  {guestEmails.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {guestEmails.map((g) => (
+                        <span
+                          key={g}
+                          className="flex items-center gap-1 bg-[#F5F5F5] text-[#37585A] rounded-full px-3 py-1 text-sm"
+                        >
+                          {g}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setGuestEmails((prev) => prev.filter((e) => e !== g))
+                            }
+                            className="ml-0.5 text-[#8A9F9F] hover:text-[#37585A]"
+                            aria-label={`Eliminar ${g}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Input row */}
+                  {guestEmails.length < 10 && (
+                    <div className="flex gap-2">
+                      <Input
+                        type="email"
+                        value={guestInput}
+                        onChange={(e) => {
+                          setGuestInput(e.target.value)
+                          setGuestError(null)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault()
+                            const trimmed = guestInput.trim()
+                            if (!trimmed) return
+                            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                              setGuestError("Email inválido")
+                              return
+                            }
+                            if (guestEmails.includes(trimmed)) {
+                              setGuestError("Ya está en la lista")
+                              return
+                            }
+                            setGuestEmails((prev) => [...prev, trimmed])
+                            setGuestInput("")
+                          }
+                        }}
+                        placeholder="invitado@email.com"
+                        disabled={isSubmitting}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isSubmitting}
+                        onClick={() => {
+                          const trimmed = guestInput.trim()
+                          if (!trimmed) return
+                          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+                            setGuestError("Email inválido")
+                            return
+                          }
+                          if (guestEmails.includes(trimmed)) {
+                            setGuestError("Ya está en la lista")
+                            return
+                          }
+                          setGuestEmails((prev) => [...prev, trimmed])
+                          setGuestInput("")
+                        }}
+                      >
+                        Añadir
+                      </Button>
+                    </div>
+                  )}
+                  {guestError && (
+                    <p className="text-xs text-red-500">{guestError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Bottom actions */}
+            <div className="flex items-center gap-3 pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                className="text-[#64797C]"
+                onClick={() => setPhase("slots")}
+              >
+                Atrás
+              </Button>
+              <Button
+                type="submit"
+                variant="accent"
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? "Confirmando…" : "Confirmar reserva"}
+              </Button>
+            </div>
           </form>
         </div>
       </div>
