@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { ToggleActiveButton } from "@/components/toggle-active-button"
 import { EventTypeActionsMenu } from "@/components/event-type-actions-menu"
 import {
-  ChevronRight,
   CalendarDays,
   CheckCircle,
   Clock,
@@ -56,24 +55,14 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
   const username = profile?.username ?? "tu-usuario"
 
   return (
-    <div className="min-h-screen bg-[#F7F8F8]">
-      <header className="border-b border-[#C2CDCF] bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <nav className="flex items-center gap-1.5 text-sm">
-            <Link href="/dashboard" className="text-[#8A9F9F] transition-colors hover:text-[#64797C]">
-              Dashboard
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-[#C2CDCF]" />
-            <span className="font-semibold text-[#37585A]">Tipos de evento</span>
-          </nav>
-          <Button render={<Link href="/dashboard/event-types/new" />} size="sm" className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            Nuevo
-          </Button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-6 py-8">
+    <main className="mx-auto max-w-3xl px-6 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-[#37585A]">Tipos de evento</h1>
+        <Button render={<Link href="/dashboard/event-types/new" />} size="sm" className="gap-1.5">
+          <Plus className="h-3.5 w-3.5" />
+          Nuevo
+        </Button>
+      </div>
         {saved === "1" && (
           <div className="mb-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
             <CheckCircle className="h-4 w-4" />
@@ -150,7 +139,6 @@ export default async function EventTypesPage({ searchParams }: PageProps) {
             ))}
           </div>
         )}
-      </main>
-    </div>
+    </main>
   )
 }

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { CancelBookingButton } from "@/components/cancel-booking-button"
 import { RescheduleModalTrigger } from "@/components/reschedule-modal-trigger"
-import { ChevronRight, CalendarDays, Clock, Video } from "lucide-react"
+import { CalendarDays, Clock, Video } from "lucide-react"
 
 interface PageProps {
   searchParams: Promise<{ filter?: string }>
@@ -87,20 +87,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   const username = (profileResult.data?.username as string | undefined) ?? ""
 
   return (
-    <div className="min-h-screen bg-[#F7F8F8]">
-      <header className="border-b border-[#C2CDCF] bg-white">
-        <div className="mx-auto max-w-3xl px-6 py-4">
-          <nav className="flex items-center gap-1.5 text-sm">
-            <Link href="/dashboard" className="text-[#8A9F9F] transition-colors hover:text-[#64797C]">
-              Dashboard
-            </Link>
-            <ChevronRight className="h-3.5 w-3.5 text-[#C2CDCF]" />
-            <span className="font-semibold text-[#37585A]">Reservas</span>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-6 py-8">
+    <main className="mx-auto max-w-3xl px-6 py-8">
         {/* Filter tabs */}
         <div className="mb-6 flex gap-1 rounded-xl border border-[#C2CDCF] bg-white p-1 shadow-card">
           {TABS.map((tab) => (
@@ -228,7 +215,6 @@ export default async function BookingsPage({ searchParams }: PageProps) {
             })}
           </div>
         )}
-      </main>
-    </div>
+    </main>
   )
 }
