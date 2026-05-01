@@ -218,52 +218,45 @@ export function ConnectAppleCalendar() {
             </DialogHeader>
 
             <form onSubmit={handleCalendarSubmit} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                {calendars.map((cal) => {
-                  const isSelected = selectedUrl === cal.url
-                  return (
-                    <label
-                      key={cal.url}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
-                        isSelected
-                          ? "border-[#64797C] bg-[#F7F8F8]"
-                          : "border-[#C2CDCF] bg-white hover:border-[#8A9F9F]"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="calendar"
-                        value={cal.url}
-                        checked={isSelected}
-                        onChange={() => setSelectedUrl(cal.url)}
-                        className="sr-only"
-                      />
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                          isSelected ? "bg-[#64797C]/10" : "bg-[#F5F5F5]"
+              <div className="max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {calendars.map((cal) => {
+                    const isSelected = selectedUrl === cal.url
+                    return (
+                      <label
+                        key={cal.url}
+                        className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
+                          isSelected
+                            ? "border-[#64797C] bg-[#F7F8F8]"
+                            : "border-[#C2CDCF] bg-white hover:border-[#8A9F9F]"
                         }`}
                       >
+                        <input
+                          type="radio"
+                          name="calendar"
+                          value={cal.url}
+                          checked={isSelected}
+                          onChange={() => setSelectedUrl(cal.url)}
+                          className="sr-only"
+                        />
                         <Calendar
-                          className={`h-4 w-4 ${
+                          className={`h-3.5 w-3.5 shrink-0 ${
                             isSelected ? "text-[#64797C]" : "text-[#8A9F9F]"
                           }`}
                         />
-                      </div>
-                      <span
-                        className={`text-sm ${
-                          isSelected
-                            ? "font-medium text-[#37585A]"
-                            : "text-[#64797C]"
-                        }`}
-                      >
-                        {cal.displayName}
-                      </span>
-                      {isSelected && (
-                        <div className="ml-auto h-2 w-2 rounded-full bg-[#64797C]" />
-                      )}
-                    </label>
-                  )
-                })}
+                        <span
+                          className={`truncate text-sm ${
+                            isSelected
+                              ? "font-medium text-[#37585A]"
+                              : "text-[#64797C]"
+                          }`}
+                        >
+                          {cal.displayName}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
               </div>
 
               {error && (

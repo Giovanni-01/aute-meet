@@ -14,6 +14,11 @@ const TABS = [
   { key: "cancelled", label: "Canceladas" },
 ] as const
 
+// Columns added by the bookings migration (may not exist if migration hasn't been run)
+const SELECT_NEW_COLS = ", host_notes, cancellation_reason, readai_notes, readai_report_url"
+const SELECT_BASE =
+  "id, attendee_name, attendee_email, attendee_notes, guest_emails, start_time, end_time, meet_link, google_event_id, status, event_types(id, title, slug, duration_minutes, color)"
+
 export default async function BookingsPage({ searchParams }: PageProps) {
   const supabase = await createClient()
   const {
@@ -28,30 +33,47 @@ export default async function BookingsPage({ searchParams }: PageProps) {
 
   const now = new Date().toISOString()
 
-  let query = supabase
-    .from("bookings")
-    .select(
-      "id, attendee_name, attendee_email, attendee_notes, guest_emails, start_time, end_time, meet_link, google_event_id, status, host_notes, cancellation_reason, readai_notes, readai_report_url, event_types(id, title, slug, duration_minutes, color)"
-    )
-    .eq("host_user_id", user.id)
+  // Build a typed query given a select string
+  async function runQuery(selectStr: string) {
+    let q = supabase
+      .from("bookings")
+      .select(selectStr)
+      .eq("host_user_id", user!.id)
 
-  if (filter === "upcoming") {
-    query = query.eq("status", "confirmed").gte("start_time", now)
-    query = query.order("start_time", { ascending: true })
-  } else if (filter === "past") {
-    query = query.eq("status", "confirmed").lt("start_time", now)
-    query = query.order("start_time", { ascending: false })
-  } else {
-    query = query.eq("status", "cancelled")
-    query = query.order("start_time", { ascending: false })
+    if (filter === "upcoming") {
+      return q.eq("status", "confirmed").gte("start_time", now).order("start_time", { ascending: true })
+    } else if (filter === "past") {
+      return q.eq("status", "confirmed").lt("start_time", now).order("start_time", { ascending: false })
+    } else {
+      return q.eq("status", "cancelled").order("start_time", { ascending: false })
+    }
   }
 
-  const [bookingsResult, profileResult] = await Promise.all([
-    query,
-    supabase.from("profiles").select("username, timezone").eq("id", user.id).single(),
-  ])
+  // Try with new columns; fall back if the migration hasn't been applied yet
+  const fullResult = await runQuery(SELECT_BASE + SELECT_NEW_COLS)
 
-  const items = (bookingsResult.data as BookingDetailData[] | null) ?? []
+  let items: BookingDetailData[]
+
+  if (fullResult.error) {
+    // New columns missing — retry without them and fill in null defaults
+    const fallback = await runQuery(SELECT_BASE)
+    items = ((fallback.data ?? []) as unknown as BookingDetailData[]).map((b) => ({
+      ...b,
+      host_notes: null,
+      cancellation_reason: null,
+      readai_notes: null,
+      readai_report_url: null,
+    }))
+  } else {
+    items = (fullResult.data as unknown as BookingDetailData[] | null) ?? []
+  }
+
+  const profileResult = await supabase
+    .from("profiles")
+    .select("username, timezone")
+    .eq("id", user.id)
+    .single()
+
   const timezone = (profileResult.data?.timezone as string | undefined) ?? "Europe/Madrid"
   const username = (profileResult.data?.username as string | undefined) ?? ""
 
