@@ -154,7 +154,7 @@ export async function POST(request: Request) {
       .maybeSingle(),
     db
       .from("calendar_connections")
-      .select("access_token, refresh_token")
+      .select("access_token, refresh_token, calendar_url")
       .eq("user_id", p.id)
       .eq("provider", "apple")
       .maybeSingle(),
@@ -247,6 +247,7 @@ export async function POST(request: Request) {
   }
 
   // ── 8. Create Apple Calendar event (if connected) — graceful degradation ──
+    console.log("[booking] appleConn:", !!appleConn, "booking:", !!booking, "calendarUrl:", (appleConn as any)?.calendar_url)
   if (appleConn && booking) {
     const appleDesc = [
       ...descriptionParts,
@@ -266,6 +267,7 @@ export async function POST(request: Request) {
       endAt,
       description: appleDesc,
       attendeeEmails: [body.attendee_email, ...guestEmails],
+      calendarUrl: (appleConn as any)?.calendar_url ?? null,
     }).catch((err) => {
       console.error("[booking] Apple Calendar event creation failed:", err)
     })
