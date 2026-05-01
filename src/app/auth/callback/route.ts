@@ -11,8 +11,17 @@ import { isEmailAllowed } from "@/lib/auth/allowed-domains"
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
+  const oauthError = searchParams.get("error")
+  const silent = searchParams.get("silent") === "1"
   // `next` lets us redirect to a specific page after login (optional)
   const next = searchParams.get("next") ?? "/dashboard"
+
+  // Silent SSO with prompt=none failed (most commonly because the user has
+  // no live Google session, or the matching account is not @aute.website).
+  // Drop the silent flag and route to the manual button to avoid a loop.
+  if (silent && oauthError) {
+    return NextResponse.redirect(`${origin}/login?manual=1`)
+  }
 
   if (code) {
     const supabase = await createClient()

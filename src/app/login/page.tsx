@@ -1,8 +1,9 @@
 import { CalendarDays, TriangleAlert } from "lucide-react"
 import { GoogleSignInButton } from "@/components/google-sign-in-button"
+import { SilentAuth } from "@/components/silent-auth"
 
 interface LoginPageProps {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; manual?: string }>
 }
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -12,8 +13,16 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const { error } = await searchParams
+  const { error, manual } = await searchParams
   const errorMessage = error ? ERROR_MESSAGES[error] : undefined
+
+  // First-time visit (no error, no manual override): try silent SSO via the
+  // user's Google session. If they're already signed in to Google with an
+  // @aute.website account they'll land authenticated without a click. If
+  // silent auth fails the callback redirects back here with ?manual=1.
+  if (!error && manual !== "1") {
+    return <SilentAuth />
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6">
