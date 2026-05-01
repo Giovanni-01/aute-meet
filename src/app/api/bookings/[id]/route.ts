@@ -61,7 +61,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 })
   }
 
-  if (booking.status === "cancelled") {
+  if (booking.status === "cancelled" && action !== "update_notes") {
     return NextResponse.json({ error: "La reserva ya está cancelada" }, { status: 409 })
   }
 

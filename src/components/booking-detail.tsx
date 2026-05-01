@@ -1,17 +1,19 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
   CalendarDays,
   Clock,
   Video,
   ChevronDown,
+  ChevronUp,
   ExternalLink,
   RefreshCw,
   Users,
   Mail,
+  Check,
+  Save,
 } from "lucide-react"
 import { CancelBookingButton } from "@/components/cancel-booking-button"
 import { RescheduleModalTrigger } from "@/components/reschedule-modal-trigger"
@@ -47,6 +49,8 @@ interface BookingDetailProps {
   username: string
 }
 
+type SaveStatus = "idle" | "saving" | "saved" | "error"
+
 function formatDateTime(isoString: string, timezone?: string) {
   return new Intl.DateTimeFormat("es-ES", {
     weekday: "short",
@@ -65,36 +69,55 @@ export function BookingDetail({
   timezone,
   username,
 }: BookingDetailProps) {
-  const router = useRouter()
   const et = booking.event_types
   const isPast = new Date(booking.end_time) < new Date()
 
   const [expanded, setExpanded] = useState(false)
   const [hostNotes, setHostNotes] = useState(booking.host_notes ?? "")
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
   const [fetchingReadAi, setFetchingReadAi] = useState(false)
   const [readaiNotes, setReadaiNotes] = useState(booking.readai_notes)
   const [readaiReportUrl, setReadaiReportUrl] = useState(booking.readai_report_url)
   const [readaiError, setReadaiError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Auto-save host notes with 1s debounce
-  const saveNotes = useCallback(
-    (value: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(async () => {
-        await fetch(`/api/bookings/${booking.id}`, {
+  const persistNotes = useCallback(
+    async (value: string) => {
+      setSaveStatus("saving")
+      try {
+        const res = await fetch(`/api/bookings/${booking.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "update_notes", host_notes: value }),
         })
-      }, 1000)
+        if (res.ok) {
+          setSaveStatus("saved")
+          if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
+          savedTimerRef.current = setTimeout(() => setSaveStatus("idle"), 2000)
+        } else {
+          setSaveStatus("error")
+        }
+      } catch {
+        setSaveStatus("error")
+      }
     },
     [booking.id]
+  )
+
+  // Auto-save with 1s debounce
+  const scheduleAutoSave = useCallback(
+    (value: string) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => persistNotes(value), 1000)
+    },
+    [persistNotes]
   )
 
   useEffect(() => {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current)
     }
   }, [])
 
@@ -113,9 +136,7 @@ export function BookingDetail({
       setReadaiNotes(data.readaiNotes)
       setReadaiReportUrl(data.readaiReportUrl)
       if (!data.readaiNotes && !data.readaiReportUrl) {
-        setReadaiError(
-          "Read AI aún no ha generado el resumen. Inténtalo más tarde."
-        )
+        setReadaiError("Read AI aún no ha generado el resumen. Inténtalo más tarde.")
       }
     } catch {
       setReadaiError("Error de red. Inténtalo de nuevo.")
@@ -124,12 +145,16 @@ export function BookingDetail({
     }
   }
 
+  // Badges: visible in collapsed state to hint there's content inside
+  const hasReadAiBadge = Boolean(readaiNotes)
+  const hasNotesBadge = Boolean(hostNotes.trim())
+
   return (
     <div className="overflow-hidden rounded-2xl border border-[#C2CDCF] bg-white shadow-card">
-      {/* ── Card header (always visible) ── */}
+      {/* ── Card header — full area is clickable ── */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-stretch gap-0 text-left"
+        className="flex w-full cursor-pointer items-stretch gap-0 text-left transition-colors hover:bg-[#F7F8F8]"
         aria-expanded={expanded}
       >
         {/* Color strip */}
@@ -139,20 +164,38 @@ export function BookingDetail({
         />
 
         <div className="flex flex-1 flex-col gap-3 px-5 py-4">
-          {/* Top row */}
+          {/* Top row: event type + badges + expand toggle */}
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-[#64797C]">
-              {et?.title ?? "Evento"}
-            </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[#64797C]">
+                {et?.title ?? "Evento"}
+              </span>
               {booking.status === "cancelled" && (
                 <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
                   Cancelada
                 </span>
               )}
-              <ChevronDown
-                className={`h-4 w-4 text-[#C2CDCF] transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
-              />
+              {hasReadAiBadge && (
+                <span className="rounded-full bg-[#EDF3F3] px-2 py-0.5 text-xs text-[#64797C]">
+                  Notas AI
+                </span>
+              )}
+              {hasNotesBadge && (
+                <span className="rounded-full bg-[#EDF3F3] px-2 py-0.5 text-xs text-[#64797C]">
+                  Mis notas
+                </span>
+              )}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1 text-sm text-[#8A9F9F]">
+              <span className="hidden sm:inline">
+                {expanded ? "Ocultar" : "Ver detalle"}
+              </span>
+              {expanded ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </div>
           </div>
 
@@ -218,7 +261,7 @@ export function BookingDetail({
       {/* ── Expandable detail panel ── */}
       <div
         className={`overflow-hidden transition-all duration-200 ease-in-out ${
-          expanded ? "max-h-[800px] opacity-100" : "max-h-0 opacity-0"
+          expanded ? "max-h-[900px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
         <div className="flex flex-col gap-5 border-t border-[#C2CDCF] px-5 py-5">
@@ -288,22 +331,18 @@ export function BookingDetail({
                 {readaiError && (
                   <p className="text-sm text-[#8A9F9F]">{readaiError}</p>
                 )}
-                <div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleFetchReadAi}
-                    disabled={fetchingReadAi}
-                    className="gap-1.5"
-                  >
-                    <RefreshCw
-                      className={`h-3.5 w-3.5 ${fetchingReadAi ? "animate-spin" : ""}`}
-                    />
-                    {fetchingReadAi
-                      ? "Buscando notas…"
-                      : "Buscar notas de Read AI"}
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleFetchReadAi}
+                  disabled={fetchingReadAi}
+                  className="w-fit gap-1.5"
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${fetchingReadAi ? "animate-spin" : ""}`}
+                  />
+                  {fetchingReadAi ? "Buscando notas…" : "Buscar notas de Read AI"}
+                </Button>
               </div>
             ) : (
               <p className="text-sm text-[#8A9F9F]">
@@ -314,19 +353,43 @@ export function BookingDetail({
 
           {/* Host notes */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#64797C]">
-              Mis notas
-            </p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#64797C]">
+                Mis notas
+              </p>
+              {saveStatus === "saving" && (
+                <span className="text-xs text-[#8A9F9F]">Guardando…</span>
+              )}
+              {saveStatus === "saved" && (
+                <span className="flex items-center gap-1 text-xs text-green-600">
+                  <Check className="h-3 w-3" />
+                  Guardado
+                </span>
+              )}
+              {saveStatus === "error" && (
+                <span className="text-xs text-red-500">Error al guardar</span>
+              )}
+            </div>
             <textarea
               rows={3}
               value={hostNotes}
               onChange={(e) => {
                 setHostNotes(e.target.value)
-                saveNotes(e.target.value)
+                scheduleAutoSave(e.target.value)
               }}
               placeholder="Añade tus notas sobre esta reunión..."
               className="w-full resize-none rounded-lg border border-[#C2CDCF] bg-white px-3 py-2 text-sm text-[#37585A] placeholder-[#C2CDCF] outline-none transition-colors focus:border-[#64797C]"
             />
+            {/* Fallback manual save button — visible when idle or after an error */}
+            {(saveStatus === "idle" || saveStatus === "error") && (
+              <button
+                onClick={() => persistNotes(hostNotes)}
+                className="mt-1.5 flex items-center gap-1 text-xs text-[#8A9F9F] hover:text-[#64797C]"
+              >
+                <Save className="h-3 w-3" />
+                Guardar notas
+              </button>
+            )}
           </div>
         </div>
       </div>
